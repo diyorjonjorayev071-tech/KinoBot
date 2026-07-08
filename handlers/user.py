@@ -277,7 +277,11 @@ async def user_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not await check_subscription(context.bot, user.id):
         await update.message.reply_text(
-            "❌ Botdan foydalanish uchun avval kanalga a'zo bo'ling.",
+            "🎬 xD KINO BOT\n\n"
+"Botdan foydalanishni davom ettirish uchun quyidagi rasmiy sahifalarimizga obuna bo'ling.\n\n"
+"📢 Telegram kanal\n"
+"📸 Instagram sahifasi\n\n"
+"Obuna bo'lgach, «✅ Tekshirish» tugmasini bosing.",
             reply_markup=subscribe_keyboard,
         )
         return

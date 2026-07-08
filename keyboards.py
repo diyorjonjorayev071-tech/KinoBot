@@ -5,9 +5,8 @@ from telegram import (
     InlineKeyboardButton,
 )
 
-# ==========================
-# ADMIN MENU
-# ==========================
+from config import CHANNEL_LINK, INSTAGRAM_LINK
+
 
 admin_keyboard = ReplyKeyboardMarkup(
     [
@@ -19,9 +18,6 @@ admin_keyboard = ReplyKeyboardMarkup(
     resize_keyboard=True,
 )
 
-# ==========================
-# USER MENU
-# ==========================
 
 user_keyboard = ReplyKeyboardMarkup(
     [
@@ -32,22 +28,19 @@ user_keyboard = ReplyKeyboardMarkup(
     resize_keyboard=True,
 )
 
-# ==========================
-# SUBSCRIBE
-# ==========================
 
 subscribe_keyboard = InlineKeyboardMarkup(
     [
         [
             InlineKeyboardButton(
                 "📢 Telegram kanal",
-                url="https://t.me/xDKinoCode",
+                url=CHANNEL_LINK,
             )
         ],
         [
             InlineKeyboardButton(
-                "📷 Instagram",
-                url="https://instagram.com/USERNAME"
+                "📸 Instagram sahifasi",
+                url=INSTAGRAM_LINK,
             )
         ],
         [

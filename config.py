@@ -16,3 +16,4 @@ ADMIN_ID = 7125210676
 
 CHANNEL_USERNAME = "@xDKinoCode"
 CHANNEL_LINK = "https://t.me/xDKinoCode"
+INSTAGRAM_LINK = "https://www.instagram.com/xdkinocode"
