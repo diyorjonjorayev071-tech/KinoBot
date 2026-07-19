@@ -1,21 +1,27 @@
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from html import escape
+
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-from config import ADMIN_ID, CHANNEL_USERNAME, CHANNEL_LINK
-from keyboards import admin_keyboard, user_keyboard, subscribe_keyboard
+from config import ADMIN_ID, CHANNEL_LINK, CHANNEL_USERNAME
 from database import (
-    add_user,
-    get_movie,
-    search_movies,
-    increase_views,
     add_favorite,
-    remove_favorite,
-    is_favorite,
+    add_movie_quality,
+    add_user,
     get_favorites,
-    get_top_movies,
     get_genres,
+    get_movie,
+    get_movie_qualities,
+    get_movie_quality_by_id,
+    get_movie_quality_rows,
     get_movies_by_genre,
+    get_top_movies,
+    increase_views,
+    is_favorite,
+    remove_favorite,
+    search_movies,
 )
+from keyboards import admin_keyboard, subscribe_keyboard, user_keyboard
 from states import user_states
 
 
@@ -46,15 +52,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     await update.message.reply_text(
-        "🎬 xD KINO BOT ga xush kelibsiz!",
+        "🎬 xD KINO BOT ga xush kelibsiz!\n\nKino kodini yuboring.",
         reply_markup=user_keyboard,
     )
 
 
 async def check_sub(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    await query.answer()
-
     user = query.from_user
     add_user(user.id)
 
@@ -62,6 +66,7 @@ async def check_sub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.answer("❌ Siz hali kanalga a'zo emassiz!", show_alert=True)
         return
 
+    await query.answer("✅ A'zolik tasdiqlandi!")
     try:
         await query.message.delete()
     except Exception:
@@ -77,36 +82,12 @@ async def check_sub(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await context.bot.send_message(
         chat_id=user.id,
-        text="✅ A'zolik tasdiqlandi!",
+        text="✅ A'zolik tasdiqlandi!\n\n🎬 Kino kodini yuboring.",
         reply_markup=user_keyboard,
     )
 
 
-def movie_buttons(code: int, trailer_file_id: str, user_id: int):
-    fav_text = "💔 Sevimlidan olish" if is_favorite(user_id, code) else "⭐ Sevimli"
-
-    buttons = [
-        [InlineKeyboardButton(fav_text, callback_data=f"fav:{code}")]
-    ]
-
-    row = []
-
-    if trailer_file_id:
-        row.append(InlineKeyboardButton("🎞 Treyler", callback_data=f"trailer:{code}"))
-
-    row.append(InlineKeyboardButton("📢 Kanal", url=CHANNEL_LINK))
-    buttons.append(row)
-
-    return InlineKeyboardMarkup(buttons)
-
-
-async def send_movie(update: Update, context: ContextTypes.DEFAULT_TYPE, code: int):
-    movie = get_movie(code)
-
-    if not movie:
-        await update.message.reply_text("❌ Bunday kodli kino topilmadi.")
-        return
-
+def _movie_caption(movie, bot_username: str, *, views: int | None = None) -> str:
     (
         name,
         year,
@@ -114,34 +95,71 @@ async def send_movie(update: Update, context: ContextTypes.DEFAULT_TYPE, code: i
         genre,
         language,
         imdb,
-        trailer_file_id,
-        poster_file_id,
-        file_id,
-        views,
+        _trailer_file_id,
+        _poster_file_id,
+        _file_id,
+        current_views,
     ) = movie
 
-    increase_views(code)
-    views += 1
-
-    me = await context.bot.get_me()
-
-    caption = (
-        f"━━━━━━━━━━━━━━━━━━\n"
-        f"🎬 <b>{name}</b>\n\n"
-        f"⭐ IMDB: {imdb}\n"
-        f"📅 Yili: {year}\n"
-        f"🌍 Davlati: {country}\n"
-        f"🎭 Janri: {genre}\n"
-        f"🗣 Tili: {language}\n"
-        f"👁 Ko‘rishlar: {views}\n"
-        f"━━━━━━━━━━━━━━━━━━\n\n"
-        f"🍿 Yoqimli tomosha!\n\n"
-        f"📢 Kanal: <a href='{CHANNEL_LINK}'>{CHANNEL_USERNAME}</a>\n"
-        f"🤖 Bot: @{me.username}\n"
-        f"━━━━━━━━━━━━━━━━━━"
+    shown_views = current_views if views is None else views
+    return (
+        "━━━━━━━━━━━━━━━━━━\n"
+        f"🎬 <b>{escape(str(name))}</b>\n\n"
+        f"⭐ IMDB: {escape(str(imdb or '-'))}\n"
+        f"📅 Yili: {escape(str(year or '-'))}\n"
+        f"🌍 Davlati: {escape(str(country or '-'))}\n"
+        f"🎭 Janri: {escape(str(genre or '-'))}\n"
+        f"🗣 Tili: {escape(str(language or '-'))}\n"
+        f"👁 Ko‘rishlar: {shown_views}\n"
+        "━━━━━━━━━━━━━━━━━━\n\n"
+        "🍿 Yoqimli tomosha!\n\n"
+        f"📢 Kanal: <a href='{CHANNEL_LINK}'>{escape(CHANNEL_USERNAME)}</a>\n"
+        f"🤖 Bot: @{escape(bot_username)}\n"
+        "━━━━━━━━━━━━━━━━━━"
     )
 
-    keyboard = movie_buttons(code, trailer_file_id, update.effective_user.id)
+
+def movie_choice_keyboard(code: int, user_id: int) -> InlineKeyboardMarkup:
+    quality_rows = get_movie_quality_rows(code)
+    buttons = []
+
+    for quality_id, quality in quality_rows:
+        buttons.append(
+            [
+                InlineKeyboardButton(
+                    f"🎞 {quality}",
+                    callback_data=f"quality:{code}:{quality_id}",
+                )
+            ]
+        )
+
+    fav_text = "💔 Sevimlidan olish" if is_favorite(user_id, code) else "⭐ Sevimli"
+    buttons.append([InlineKeyboardButton(fav_text, callback_data=f"fav:{code}")])
+    buttons.append([InlineKeyboardButton("📢 Kanal", url=CHANNEL_LINK)])
+    return InlineKeyboardMarkup(buttons)
+
+
+async def send_movie(update: Update, context: ContextTypes.DEFAULT_TYPE, code: int):
+    movie = get_movie(code)
+    if not movie:
+        await update.message.reply_text("❌ Bunday kodli kino topilmadi.")
+        return
+
+    quality_rows = get_movie_quality_rows(code)
+    if not quality_rows and movie[8]:
+        # Juda eski yozuv bo'lsa ham foydalanuvchi videosiz qolmaydi.
+        add_movie_quality(code, "Original", movie[8])
+        quality_rows = get_movie_quality_rows(code)
+
+    if not quality_rows:
+        await update.message.reply_text("❌ Bu kino uchun video sifati topilmadi.")
+        return
+
+    me = await context.bot.get_me()
+    caption = _movie_caption(movie, me.username)
+    caption += "\n\n<b>Kerakli sifatni tanlang:</b>"
+    keyboard = movie_choice_keyboard(code, update.effective_user.id)
+    poster_file_id = movie[7]
 
     if poster_file_id:
         await update.message.reply_photo(
@@ -150,76 +168,62 @@ async def send_movie(update: Update, context: ContextTypes.DEFAULT_TYPE, code: i
             parse_mode="HTML",
             reply_markup=keyboard,
         )
-
-        await update.message.reply_video(
-            video=file_id,
-            caption=f"🎬 <b>{name}</b>",
-            parse_mode="HTML",
-        )
     else:
-        await update.message.reply_video(
-            video=file_id,
-            caption=caption,
+        await update.message.reply_text(
+            caption,
             parse_mode="HTML",
             reply_markup=keyboard,
+            disable_web_page_preview=True,
         )
 
 
 async def show_favorites(update: Update, context: ContextTypes.DEFAULT_TYPE):
     favorites = get_favorites(update.effective_user.id)
-
     if not favorites:
         await update.message.reply_text("❤️ Sevimlilar ro‘yxatingiz bo‘sh.")
         return
 
     text = "❤️ <b>Sevimli kinolaringiz:</b>\n\n"
-
     for code, name, year, genre in favorites:
         text += (
-            f"🎬 <b>{name}</b>\n"
-            f"📅 {year} | 🎭 {genre}\n"
+            f"🎬 <b>{escape(str(name))}</b>\n"
+            f"📅 {escape(str(year or '-'))} | 🎭 {escape(str(genre or '-'))}\n"
             f"🔑 Kod: <code>{code}</code>\n\n"
         )
-
     await update.message.reply_text(text, parse_mode="HTML")
 
 
 async def show_top_movies(update: Update, context: ContextTypes.DEFAULT_TYPE):
     movies = get_top_movies()
-
     if not movies:
         await update.message.reply_text("❌ Hozircha top kinolar mavjud emas.")
         return
 
     msg = "🔥 <b>TOP 10 Kinolar</b>\n\n"
-
-    for i, (code, name, year, genre, views) in enumerate(movies, start=1):
+    for index, (code, name, year, _genre, views) in enumerate(movies, start=1):
         msg += (
-            f"{i}. 🎬 <b>{name}</b>\n"
-            f"👁 {views} | 📅 {year}\n"
+            f"{index}. 🎬 <b>{escape(str(name))}</b>\n"
+            f"👁 {views} | 📅 {escape(str(year or '-'))}\n"
             f"🔑 Kod: <code>{code}</code>\n\n"
         )
-
     await update.message.reply_text(msg, parse_mode="HTML")
 
 
 async def show_genres(update: Update, context: ContextTypes.DEFAULT_TYPE):
     genres = get_genres()
-
     if not genres:
         await update.message.reply_text("❌ Janrlar mavjud emas.")
         return
 
-    keyboard = []
-
-    for genre, count in genres:
-        keyboard.append([
+    keyboard = [
+        [
             InlineKeyboardButton(
                 f"🎭 {genre} ({count})",
                 callback_data=f"genre:{genre}",
             )
-        ])
-
+        ]
+        for genre, count in genres
+    ]
     await update.message.reply_text(
         "🎭 Janrni tanlang:",
         reply_markup=InlineKeyboardMarkup(keyboard),
@@ -228,60 +232,51 @@ async def show_genres(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def show_movies_by_genre(update: Update, context: ContextTypes.DEFAULT_TYPE, genre: str):
     movies = get_movies_by_genre(genre)
-
     if not movies:
         await update.message.reply_text("❌ Bu janrda kino topilmadi.")
         return
 
-    msg = f"🎭 <b>{genre}</b>\n\n"
-
-    for code, name, year, genre_name in movies:
+    msg = f"🎭 <b>{escape(genre)}</b>\n\n"
+    for code, name, year, _genre_name in movies:
         msg += (
-            f"🎬 <b>{name}</b>\n"
-            f"📅 {year}\n"
+            f"🎬 <b>{escape(str(name))}</b>\n"
+            f"📅 {escape(str(year or '-'))}\n"
             f"🔑 Kod: <code>{code}</code>\n\n"
         )
-
     await update.message.reply_text(msg, parse_mode="HTML")
 
 
 async def search_by_name(update: Update, context: ContextTypes.DEFAULT_TYPE, query: str):
     results = search_movies(query)
-
     if not results:
         await update.message.reply_text("❌ Bu nom bo‘yicha kino topilmadi.")
         return
 
     message = "🔍 <b>Qidiruv natijalari:</b>\n\n"
-
     for code, name, year, genre in results:
         message += (
-            f"🎬 <b>{name}</b>\n"
-            f"📅 {year} | 🎭 {genre}\n"
+            f"🎬 <b>{escape(str(name))}</b>\n"
+            f"📅 {escape(str(year or '-'))} | 🎭 {escape(str(genre or '-'))}\n"
             f"🔑 Kod: <code>{code}</code>\n\n"
         )
-
     message += "Kerakli kino kodini yuboring."
-
     await update.message.reply_text(message, parse_mode="HTML")
 
 
 async def user_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     text = update.message.text.strip()
-
     add_user(user.id)
 
-    if user.id == ADMIN_ID and user_states.get(user.id):
+    # Admin xabarlari admin handlerlarida ishlanadi; bir xabar ikki marta bajarilmaydi.
+    if user.id == ADMIN_ID:
         return
 
     if not await check_subscription(context.bot, user.id):
         await update.message.reply_text(
             "🎬 xD KINO BOT\n\n"
-"Botdan foydalanishni davom ettirish uchun quyidagi rasmiy sahifalarimizga obuna bo'ling.\n\n"
-"📢 Telegram kanal\n"
-"📸 Instagram sahifasi\n\n"
-"Obuna bo'lgach, «✅ Tekshirish» tugmasini bosing.",
+            "Botdan foydalanishni davom ettirish uchun rasmiy sahifalarimizga "
+            "obuna bo‘ling. So‘ng «✅ Tekshirish» tugmasini bosing.",
             reply_markup=subscribe_keyboard,
         )
         return
@@ -310,30 +305,22 @@ async def user_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if text == "ℹ️ Yordam":
         await update.message.reply_text(
             "ℹ️ <b>Yordam</b>\n\n"
-            "🔍 Kino qidirish — kino nomi yoki kod orqali qidirish.\n"
+            "Kino kodini yuboring, so‘ng kerakli video sifatini tanlang.\n"
+            "🔍 Kino qidirish — nom yoki kod orqali qidirish.\n"
             "🔥 Top kinolar — eng ko‘p ko‘rilgan kinolar.\n"
             "❤️ Sevimlilar — saqlangan kinolaringiz.\n"
-            "🎭 Janrlar — janrlar bo‘yicha kinolar.\n\n"
-            "Kino olish uchun kod yuboring. Masalan: <code>1234</code>",
+            "🎭 Janrlar — janrlar bo‘yicha kinolar.",
             parse_mode="HTML",
         )
         return
 
     if user_states.get(user.id) == "search_movie":
         user_states.pop(user.id, None)
-
         if text.isdigit():
             await send_movie(update, context, int(text))
-            return
-
-        await search_by_name(update, context, text)
+        else:
+            await search_by_name(update, context, text)
         return
-
-    genres = get_genres()
-    for genre, _ in genres:
-        if text.lower() == genre.lower():
-            await show_movies_by_genre(update, context, genre)
-            return
 
     if text.isdigit():
         await send_movie(update, context, int(text))
@@ -344,61 +331,92 @@ async def user_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def movie_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    await query.answer()
-
-    data = query.data
+    data = query.data or ""
     user_id = query.from_user.id
 
-    if data.startswith("trailer:"):
-        code = int(data.split(":")[1])
+    if data.startswith("quality:"):
+        try:
+            _, code_text, quality_id_text = data.split(":", 2)
+            code = int(code_text)
+            quality_id = int(quality_id_text)
+        except ValueError:
+            await query.answer("❌ Noto‘g‘ri tugma.", show_alert=True)
+            return
+
+        if not await check_subscription(context.bot, user_id):
+            await query.answer("❌ Avval kanalga a’zo bo‘ling.", show_alert=True)
+            return
+
         movie = get_movie(code)
-
-        if not movie:
-            await query.answer("❌ Kino topilmadi.", show_alert=True)
+        quality_row = get_movie_quality_by_id(code, quality_id)
+        if not movie or not quality_row:
+            await query.answer("❌ Kino yoki sifat topilmadi.", show_alert=True)
             return
 
-        name = movie[0]
-        trailer_file_id = movie[6]
-
-        if not trailer_file_id:
-            await query.answer("❌ Treyler mavjud emas.", show_alert=True)
-            return
+        quality, file_id = quality_row
+        await query.answer(f"🎞 {quality} yuborilmoqda...")
+        increase_views(code)
+        new_views = int(movie[9]) + 1
+        me = await context.bot.get_me()
+        caption = _movie_caption(movie, me.username, views=new_views)
+        caption = f"🎞 Sifat: <b>{escape(str(quality))}</b>\n\n" + caption
 
         await context.bot.send_video(
             chat_id=query.message.chat_id,
-            video=trailer_file_id,
-            caption=f"🎞 <b>{name}</b> treyleri",
+            video=file_id,
+            caption=caption,
             parse_mode="HTML",
         )
         return
 
     if data.startswith("fav:"):
-        code = int(data.split(":")[1])
+        try:
+            code = int(data.split(":", 1)[1])
+        except ValueError:
+            await query.answer("❌ Noto‘g‘ri tugma.", show_alert=True)
+            return
+
+        if not get_movie(code):
+            await query.answer("❌ Kino topilmadi.", show_alert=True)
+            return
 
         if is_favorite(user_id, code):
             remove_favorite(user_id, code)
-            await query.answer("💔 Sevimlilardan olib tashlandi.", show_alert=True)
+            text = "💔 Sevimlilardan olib tashlandi."
         else:
             add_favorite(user_id, code)
-            await query.answer("⭐ Sevimlilarga qo‘shildi.", show_alert=True)
+            text = "⭐ Sevimlilarga qo‘shildi."
+
+        await query.answer(text, show_alert=True)
+        try:
+            await query.edit_message_reply_markup(
+                reply_markup=movie_choice_keyboard(code, user_id)
+            )
+        except Exception:
+            pass
         return
 
     if data.startswith("genre:"):
         genre = data.split(":", 1)[1]
         movies = get_movies_by_genre(genre)
-
         if not movies:
             await query.answer("❌ Kino topilmadi.", show_alert=True)
             return
 
-        text = f"🎭 <b>{genre}</b>\n\n"
-
-        for code, name, year, genre_name in movies:
+        await query.answer()
+        text = f"🎭 <b>{escape(genre)}</b>\n\n"
+        for code, name, year, _genre_name in movies:
             text += (
-                f"🎬 <b>{name}</b>\n"
-                f"📅 {year}\n"
+                f"🎬 <b>{escape(str(name))}</b>\n"
+                f"📅 {escape(str(year or '-'))}\n"
                 f"🔑 <code>{code}</code>\n\n"
             )
-
         await query.message.reply_text(text, parse_mode="HTML")
         return
+
+    if data.startswith("trailer:"):
+        # Eski xabarlardagi tugmalar uchun: yangi botda treyler butunlay o'chirilgan.
+        await query.answer("🎞 Treyler funksiyasi olib tashlangan.", show_alert=True)
+        return
+
+    await query.answer()

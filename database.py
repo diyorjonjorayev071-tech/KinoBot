@@ -21,7 +21,11 @@ DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 if not DB_PATH.exists():
     for seed_name in ("movies-backup.db", "movies.db"):
         seed_path = BASE_DIR / seed_name
-        if seed_path.exists() and seed_path.resolve() != DB_PATH.resolve() and seed_path.stat().st_size > 0:
+        if (
+            seed_path.exists()
+            and seed_path.resolve() != DB_PATH.resolve()
+            and seed_path.stat().st_size > 0
+        ):
             shutil.copy2(seed_path, DB_PATH)
             break
 
@@ -48,6 +52,28 @@ def _commit() -> None:
 def _table_columns(table: str) -> set[str]:
     cursor.execute(f"PRAGMA table_info({table})")
     return {row[1] for row in cursor.fetchall()}
+
+
+def normalize_quality(quality: str) -> str:
+    value = " ".join(str(quality).strip().split())
+    if not value:
+        raise ValueError("Sifat nomi bo'sh bo'lmasligi kerak.")
+    if len(value) > 24:
+        raise ValueError("Sifat nomi 24 belgidan oshmasligi kerak.")
+
+    common = {
+        "360": "360p",
+        "360p": "360p",
+        "480": "480p",
+        "480p": "480p",
+        "720": "720p",
+        "720p": "720p",
+        "1080": "1080p",
+        "1080p": "1080p",
+        "original": "Original",
+        "asl": "Original",
+    }
+    return common.get(value.lower(), value)
 
 
 def init_database() -> None:
@@ -128,7 +154,7 @@ def init_database() -> None:
 
         _commit()
 
-        # Mavjud kinolarni yo'qotmaydi: eski file_id'lar "Original" sifatiga o'tadi.
+        # Oldingi 57 ta kino o'chmaydi: ularning file_id qiymati "Original" sifatiga o'tadi.
         cursor.execute(
             """
             INSERT OR IGNORE INTO movie_qualities(
@@ -193,8 +219,11 @@ def add_movie(
     trailer_file_id,
     poster_file_id,
     file_id,
+    quality: str = "Original",
 ):
     code = generate_code()
+    quality = normalize_quality(quality)
+
     with db_lock:
         cursor.execute(
             """
@@ -212,7 +241,7 @@ def add_movie(
                 genre,
                 language,
                 imdb,
-                trailer_file_id or "",
+                "",  # Treyler funksiyasi olib tashlangan.
                 poster_file_id or "",
                 file_id,
                 0,
@@ -221,12 +250,10 @@ def add_movie(
         )
         cursor.execute(
             """
-            INSERT OR REPLACE INTO movie_qualities(
-                movie_code, quality, file_id, created_at
-            )
-            VALUES(?, 'Original', ?, ?)
+            INSERT INTO movie_qualities(movie_code, quality, file_id, created_at)
+            VALUES(?, ?, ?, ?)
             """,
-            (code, file_id, now()),
+            (code, quality, file_id, now()),
         )
         _commit()
     return code
@@ -377,10 +404,10 @@ def get_all_movies(limit: int = 100):
         return cursor.fetchall()
 
 
-def add_movie_quality(movie_code: int, quality: str, file_id: str) -> None:
-    quality = quality.strip()
-    if not quality or not file_id:
-        raise ValueError("quality va file_id bo'sh bo'lmasligi kerak")
+def add_movie_quality(movie_code: int, quality: str, file_id: str) -> int:
+    quality = normalize_quality(quality)
+    if not file_id:
+        raise ValueError("Video file_id bo'sh bo'lmasligi kerak.")
 
     with db_lock:
         cursor.execute(
@@ -388,12 +415,11 @@ def add_movie_quality(movie_code: int, quality: str, file_id: str) -> None:
             INSERT INTO movie_qualities(movie_code, quality, file_id, created_at)
             VALUES(?, ?, ?, ?)
             ON CONFLICT(movie_code, quality)
-            DO UPDATE SET file_id=excluded.file_id
+            DO UPDATE SET file_id=excluded.file_id, created_at=excluded.created_at
             """,
             (movie_code, quality, file_id, now()),
         )
 
-        # Eski handlerlar uchun asosiy file_id doim mavjud bo'lib turadi.
         cursor.execute(
             """
             UPDATE movies
@@ -405,12 +431,41 @@ def add_movie_quality(movie_code: int, quality: str, file_id: str) -> None:
         )
         _commit()
 
+        cursor.execute(
+            "SELECT id FROM movie_qualities WHERE movie_code=? AND quality=?",
+            (movie_code, quality),
+        )
+        return int(cursor.fetchone()[0])
+
 
 def get_movie_qualities(movie_code: int):
     with db_lock:
         cursor.execute(
             """
             SELECT quality, file_id
+            FROM movie_qualities
+            WHERE movie_code=?
+            ORDER BY
+                CASE quality
+                    WHEN '360p' THEN 1
+                    WHEN '480p' THEN 2
+                    WHEN '720p' THEN 3
+                    WHEN '1080p' THEN 4
+                    WHEN 'Original' THEN 5
+                    ELSE 6
+                END,
+                quality
+            """,
+            (movie_code,),
+        )
+        return cursor.fetchall()
+
+
+def get_movie_quality_rows(movie_code: int):
+    with db_lock:
+        cursor.execute(
+            """
+            SELECT id, quality
             FROM movie_qualities
             WHERE movie_code=?
             ORDER BY
@@ -443,15 +498,71 @@ def get_movie_quality(movie_code: int, quality: str):
         return row[0] if row else None
 
 
+def get_movie_quality_by_id(movie_code: int, quality_id: int):
+    with db_lock:
+        cursor.execute(
+            """
+            SELECT quality, file_id
+            FROM movie_qualities
+            WHERE movie_code=? AND id=?
+            """,
+            (movie_code, quality_id),
+        )
+        return cursor.fetchone()
+
+
 def delete_movie_quality(movie_code: int, quality: str) -> bool:
     with db_lock:
         cursor.execute(
-            "DELETE FROM movie_qualities WHERE movie_code=? AND quality=?",
+            "SELECT id FROM movie_qualities WHERE movie_code=? AND quality=?",
             (movie_code, quality),
         )
-        changed = cursor.rowcount > 0
+        row = cursor.fetchone()
+        if not row:
+            return False
+        return delete_movie_quality_by_id(movie_code, int(row[0])) == "deleted"
+
+
+def delete_movie_quality_by_id(movie_code: int, quality_id: int) -> str:
+    """Natija: deleted, not_found yoki last_quality."""
+    with db_lock:
+        cursor.execute(
+            "SELECT file_id FROM movie_qualities WHERE movie_code=? AND id=?",
+            (movie_code, quality_id),
+        )
+        target = cursor.fetchone()
+        if not target:
+            return "not_found"
+
+        cursor.execute(
+            "SELECT COUNT(*) FROM movie_qualities WHERE movie_code=?",
+            (movie_code,),
+        )
+        if int(cursor.fetchone()[0]) <= 1:
+            return "last_quality"
+
+        deleted_file_id = target[0]
+        cursor.execute(
+            "DELETE FROM movie_qualities WHERE movie_code=? AND id=?",
+            (movie_code, quality_id),
+        )
+
+        cursor.execute("SELECT file_id FROM movies WHERE code=?", (movie_code,))
+        movie_row = cursor.fetchone()
+        if movie_row and movie_row[0] == deleted_file_id:
+            cursor.execute(
+                "SELECT file_id FROM movie_qualities WHERE movie_code=? ORDER BY id LIMIT 1",
+                (movie_code,),
+            )
+            replacement = cursor.fetchone()
+            if replacement:
+                cursor.execute(
+                    "UPDATE movies SET file_id=? WHERE code=?",
+                    (replacement[0], movie_code),
+                )
+
         _commit()
-        return changed
+        return "deleted"
 
 
 def add_favorite(user_id, movie_code):

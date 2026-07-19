@@ -1,12 +1,11 @@
 from telegram import (
-    ReplyKeyboardMarkup,
-    KeyboardButton,
-    InlineKeyboardMarkup,
     InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    KeyboardButton,
+    ReplyKeyboardMarkup,
 )
 
 from config import CHANNEL_LINK, INSTAGRAM_LINK
-
 
 admin_keyboard = ReplyKeyboardMarkup(
     [
@@ -18,7 +17,6 @@ admin_keyboard = ReplyKeyboardMarkup(
     resize_keyboard=True,
 )
 
-
 user_keyboard = ReplyKeyboardMarkup(
     [
         [KeyboardButton("🔍 Kino qidirish"), KeyboardButton("🔥 Top kinolar")],
@@ -28,26 +26,10 @@ user_keyboard = ReplyKeyboardMarkup(
     resize_keyboard=True,
 )
 
-
 subscribe_keyboard = InlineKeyboardMarkup(
     [
-        [
-            InlineKeyboardButton(
-                "📢 Telegram kanal",
-                url=CHANNEL_LINK,
-            )
-        ],
-        [
-            InlineKeyboardButton(
-                "📸 Instagram sahifasi",
-                url=INSTAGRAM_LINK,
-            )
-        ],
-        [
-            InlineKeyboardButton(
-                "✅ Tekshirish",
-                callback_data="check_sub",
-            )
-        ],
+        [InlineKeyboardButton("📢 Telegram kanal", url=CHANNEL_LINK)],
+        [InlineKeyboardButton("📸 Instagram sahifasi", url=INSTAGRAM_LINK)],
+        [InlineKeyboardButton("✅ Tekshirish", callback_data="check_sub")],
     ]
 )
