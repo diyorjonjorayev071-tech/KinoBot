@@ -124,12 +124,6 @@ class Database:
 
     def _seed_from_sqlite(self, path: Path) -> None:
         pool = self._require_pool()
-        with pool.connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT COUNT(*) AS count FROM movies")
-                if int(cur.fetchone()["count"]) > 0:
-                    return
-
         if not path.exists():
             logger.warning("Seed SQLite topilmadi: %s", path)
             return
@@ -145,6 +139,18 @@ class Database:
             if table_exists:
                 quality_rows = sqlite_conn.execute("SELECT * FROM movie_qualities").fetchall()
 
+            with pool.connection() as conn, conn.cursor() as cur:
+                cur.execute("SELECT COUNT(*) AS count FROM movies")
+                current_count = int(cur.fetchone()["count"])
+
+            if current_count >= len(movie_rows):
+                logger.info(
+                    "SQLite sinxronlash o'tkazib yuborildi: manba=%s, PostgreSQL=%s",
+                    len(movie_rows),
+                    current_count,
+                )
+                return
+
             with pool.connection() as conn:
                 with conn.cursor() as cur:
                     for row in movie_rows:
@@ -158,7 +164,15 @@ class Database:
                                 %s, %s, %s, %s, %s, %s, %s, %s, %s,
                                 COALESCE(NULLIF(%s, '')::timestamptz, NOW())
                             )
-                            ON CONFLICT(code) DO NOTHING
+                            ON CONFLICT(code) DO UPDATE SET
+                                name=EXCLUDED.name,
+                                year=EXCLUDED.year,
+                                country=EXCLUDED.country,
+                                genre=EXCLUDED.genre,
+                                language=EXCLUDED.language,
+                                imdb=EXCLUDED.imdb,
+                                poster_file_id=EXCLUDED.poster_file_id,
+                                views=GREATEST(movies.views, EXCLUDED.views)
                             """,
                             (
                                 int(row["code"]),
@@ -180,7 +194,8 @@ class Database:
                                 """
                                 INSERT INTO movie_qualities(movie_code, quality, file_id)
                                 VALUES(%s, 'Original', %s)
-                                ON CONFLICT(movie_code, quality) DO NOTHING
+                                ON CONFLICT(movie_code, quality)
+                                DO UPDATE SET file_id=EXCLUDED.file_id
                                 """,
                                 (int(row["code"]), file_id),
                             )
@@ -196,7 +211,14 @@ class Database:
                             (int(row["movie_code"]), str(row["quality"]), str(row["file_id"])),
                         )
                 conn.commit()
-            logger.info("SQLite seed import qilindi: %s ta kino", len(movie_rows))
+            with pool.connection() as conn, conn.cursor() as cur:
+                cur.execute("SELECT COUNT(*) AS count FROM movies")
+                postgres_count = int(cur.fetchone()["count"])
+            logger.info(
+                "SQLite sinxronlandi: manba=%s ta, PostgreSQL=%s ta kino",
+                len(movie_rows),
+                postgres_count,
+            )
         finally:
             sqlite_conn.close()
 

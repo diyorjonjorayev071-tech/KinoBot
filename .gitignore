@@ -10,3 +10,5 @@ movies.db
 *.db-shm
 
 .railway/
+
+movies-current-*.db
