@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1200" role="img" aria-label="Kino posteri">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#28101d"/><stop offset=".5" stop-color="#11131a"/><stop offset="1" stop-color="#31121b"/>
+    </linearGradient>
+    <radialGradient id="r"><stop stop-color="#ff3158" stop-opacity=".35"/><stop offset="1" stop-color="#ff3158" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="800" height="1200" fill="url(#g)"/>
+  <circle cx="650" cy="220" r="360" fill="url(#r)"/>
+  <g fill="none" stroke="#ff496b" stroke-width="18" opacity=".8">
+    <rect x="170" y="340" width="460" height="320" rx="52"/>
+    <path d="M340 405l210 95-210 95z" fill="#ff496b" stroke="none"/>
+  </g>
+  <text x="400" y="770" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="82" font-weight="800">xD KINO</text>
+  <text x="400" y="845" text-anchor="middle" fill="#a8aabd" font-family="Arial, sans-serif" font-size="32">Kino olami bir joyda</text>
+</svg>

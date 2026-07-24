@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#08090d">
+  <meta name="color-scheme" content="dark">
+  <title>xD KINO</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <header class="topbar">
+      <button class="brand" data-action="home" aria-label="Bosh sahifa">
+        <span class="brand-mark">xD</span><span>KINO</span>
+      </button>
+      <div class="topbar-actions">
+        <button id="searchOpen" class="icon-button" aria-label="Qidirish">⌕</button>
+        <button id="profileButton" class="avatar" aria-label="Profil">D</button>
+      </div>
+    </header>
+
+    <main id="mainContent">
+      <section id="hero" class="hero skeleton-block">
+        <div class="hero-shade"></div>
+        <div class="hero-content">
+          <span class="eyebrow">xD KINO tavsiya qiladi</span>
+          <h1 id="heroTitle">Kinolar dunyosi</h1>
+          <p id="heroMeta">Yangi va ommabop kinolar bir joyda</p>
+          <div class="hero-actions">
+            <button id="heroWatch" class="primary-button">▶ Botda tomosha</button>
+            <button id="heroInfo" class="secondary-button">ⓘ Batafsil</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="searchPanel" class="search-panel hidden">
+        <div class="search-box">
+          <span>⌕</span>
+          <input id="searchInput" type="search" inputmode="search" autocomplete="off" placeholder="Kino nomi yoki kodini yozing">
+          <button id="searchClose" class="clear-button" aria-label="Yopish">✕</button>
+        </div>
+        <div id="genreChips" class="chips"></div>
+      </section>
+
+      <section class="content-section">
+        <div class="section-head"><h2>🔥 Ommabop</h2><button data-view="popular">Barchasi</button></div>
+        <div id="popularRow" class="movie-row"></div>
+      </section>
+
+      <section class="content-section">
+        <div class="section-head"><h2>✨ Yangi qo‘shilganlar</h2><button data-view="new">Barchasi</button></div>
+        <div id="newRow" class="movie-row"></div>
+      </section>
+
+      <section id="resultsSection" class="content-section hidden">
+        <div class="section-head"><h2 id="resultsTitle">Natijalar</h2><span id="resultsCount"></span></div>
+        <div id="resultsGrid" class="movie-grid"></div>
+        <button id="loadMore" class="load-more hidden">Yana ko‘rsatish</button>
+      </section>
+
+      <section id="emptyState" class="empty-state hidden">
+        <div class="empty-icon">🎬</div>
+        <h2>Kino topilmadi</h2>
+        <p>Boshqa nom, kod yoki janr bilan qidiring.</p>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Asosiy navigatsiya">
+      <button class="nav-item active" data-action="home"><span>⌂</span><small>Bosh sahifa</small></button>
+      <button class="nav-item" data-action="search"><span>⌕</span><small>Qidiruv</small></button>
+      <button class="nav-item" data-action="favorites"><span>♡</span><small>Sevimlilar</small></button>
+      <button class="nav-item" data-action="profile"><span>◎</span><small>Profil</small></button>
+    </nav>
+  </div>
+
+  <div id="movieModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button id="modalBackdrop" class="modal-backdrop" aria-label="Yopish"></button>
+    <article class="modal-sheet">
+      <button id="modalClose" class="modal-close" aria-label="Yopish">✕</button>
+      <div id="modalPoster" class="modal-poster"></div>
+      <div class="modal-body">
+        <div class="modal-title-row"><h2 id="modalTitle"></h2><button id="favoriteButton" class="favorite-button">♡</button></div>
+        <p id="modalMeta" class="modal-meta"></p>
+        <p id="modalGenres" class="modal-genres"></p>
+        <div id="qualityList" class="quality-list"></div>
+        <button id="modalWatch" class="primary-button wide">▶ Botda tomosha</button>
+      </div>
+    </article>
+  </div>
+
+  <div id="profileSheet" class="modal hidden" role="dialog" aria-modal="true">
+    <button class="modal-backdrop" data-close-profile aria-label="Yopish"></button>
+    <article class="profile-card">
+      <button class="modal-close" data-close-profile aria-label="Yopish">✕</button>
+      <div id="profileAvatar" class="profile-avatar">D</div>
+      <h2 id="profileName">Mehmon</h2>
+      <p id="profileUsername">Telegram ichida oching</p>
+      <div class="profile-note">Sevimlilar va tarix Telegram profilingiz bilan xavfsiz saqlanadi.</div>
+    </article>
+  </div>
+
+  <div id="toast" class="toast hidden" role="status"></div>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>
