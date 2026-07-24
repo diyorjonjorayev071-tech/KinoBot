@@ -33,6 +33,21 @@ async def check_subscription(bot, user_id: int) -> bool:
         return False
 
 
+def _movie_code_from_start_args(args) -> int | None:
+    if not args:
+        return None
+
+    payload = str(args[0]).strip()
+    prefix = "movie_"
+    if not payload.startswith(prefix):
+        return None
+
+    code_text = payload[len(prefix):]
+    if not code_text.isdigit():
+        return None
+    return int(code_text)
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     add_user(user.id)
@@ -42,6 +57,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "❌ Botdan foydalanish uchun avval kanalga a'zo bo'ling.",
             reply_markup=subscribe_keyboard,
         )
+        return
+
+    # Super App ichidagi “Botda tomosha” tugmasi:
+    # https://t.me/xDKinoCodeBot?start=movie_1234
+    movie_code = _movie_code_from_start_args(context.args)
+    if movie_code is not None:
+        await send_movie(update, context, movie_code)
         return
 
     if user.id == ADMIN_ID:
