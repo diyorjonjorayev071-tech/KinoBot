@@ -8,7 +8,7 @@
   <meta name="description" content="xD KINO — Telegram ichidagi zamonaviy kino katalogi">
   <title>xD KINO</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="/static/app.css?v=2.0.0">
+  <link rel="stylesheet" href="/static/app.css?v=2.1.0">
 </head>
 <body>
   <div id="splash" class="splash" aria-label="Yuklanmoqda">
@@ -32,7 +32,13 @@
 
     <main>
       <section id="homeView" class="view active-view">
-        <div id="storyStrip" class="story-strip" aria-label="Tavsiyalar"></div>
+        <section class="quick-picks" aria-label="Tezkor tavsiyalar">
+          <div class="quick-picks-heading">
+            <strong>🔥 Tezkor tavsiyalar</strong>
+            <small>Yon tomonga suring</small>
+          </div>
+          <div id="storyStrip" class="story-strip"></div>
+        </section>
 
         <section id="heroCarousel" class="hero-carousel skeleton-block" aria-label="Tanlangan kinolar">
           <div id="heroBackdrop" class="hero-backdrop"></div>
@@ -138,6 +144,6 @@
   </div>
 
   <div id="toast" class="toast hidden" role="status"></div>
-  <script src="/static/app.js?v=2.0.0" defer></script>
+  <script src="/static/app.js?v=2.1.0" defer></script>
 </body>
 </html>

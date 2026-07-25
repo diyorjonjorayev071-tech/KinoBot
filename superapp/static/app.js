@@ -134,7 +134,10 @@ function renderStories(items) {
     image.alt = movie.name || 'Tavsiya';
     image.src = posterUrl(movie.code);
     image.onerror = () => { image.src = '/static/placeholder.svg'; };
-    ring.append(image);
+    const code = document.createElement('span');
+    code.className = 'story-code';
+    code.textContent = `#${movie.code}`;
+    ring.append(image, code);
     const label = document.createElement('small');
     label.textContent = movie.name || `#${movie.code}`;
     button.append(ring, label);
