@@ -47,7 +47,7 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(
     title=f"{APP_NAME} Super App API",
-    version="2.0.0-staging",
+    version="2.2.0-staging",
     lifespan=lifespan,
     docs_url="/api/docs",
     redoc_url=None,
@@ -69,8 +69,10 @@ async def security_headers(request: Request, call_next):
         "img-src 'self' data: blob: https:; "
         "connect-src 'self'; frame-ancestors 'self' https://web.telegram.org https://*.telegram.org"
     )
-    if request.url.path.startswith("/api/"):
-        response.headers["Cache-Control"] = "no-store"
+    if request.url.path.startswith("/api/") or request.url.path == "/" or request.url.path.endswith((".html", ".css", ".js")):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
     return response
 
 
@@ -111,6 +113,7 @@ def health():
     return {
         "status": "ok" if status["database"] == "ok" else "degraded",
         "service": "superapp-staging",
+        "ui_version": "2.2.0",
         **status,
     }
 
