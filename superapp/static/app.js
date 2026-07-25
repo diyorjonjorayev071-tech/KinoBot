@@ -1,69 +1,98 @@
 'use strict';
 
 const tg = window.Telegram?.WebApp;
-if (tg) {
-  tg.ready();
-  tg.expand();
-  tg.setHeaderColor?.('#08090d');
-  tg.setBackgroundColor?.('#08090d');
-  tg.disableVerticalSwipes?.();
-}
+const initData = tg?.initData || '';
+const initUser = tg?.initDataUnsafe?.user || null;
+const $ = (selector) => document.querySelector(selector);
+const $$ = (selector) => [...document.querySelectorAll(selector)];
 
 const state = {
   config: { bot_username: 'xDKinoCodeBot' },
+  user: initUser,
   home: null,
-  currentMovie: null,
+  genres: [],
   currentView: 'home',
-  selectedGenre: '',
-  query: '',
-  page: 1,
-  total: 0,
-  user: tg?.initDataUnsafe?.user || null,
+  heroIndex: 0,
+  heroTimer: null,
+  currentMovie: null,
+  favorites: new Set(),
+  search: { q: '', genre: '', country: '', sort: 'popular', page: 1, total: 0 },
 };
 
-const $ = (selector) => document.querySelector(selector);
-const $$ = (selector) => [...document.querySelectorAll(selector)];
-const initData = tg?.initData || '';
-
-function api(path, options = {}) {
-  const headers = new Headers(options.headers || {});
-  if (initData) headers.set('X-Telegram-Init-Data', initData);
-  if (options.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
-  return fetch(path, { ...options, headers }).then(async (response) => {
-    if (!response.ok) {
-      const payload = await response.json().catch(() => ({}));
-      throw new Error(payload.detail || `HTTP ${response.status}`);
-    }
-    return response.json();
-  });
+if (tg) {
+  tg.ready();
+  tg.expand();
+  tg.setHeaderColor?.('#080a13');
+  tg.setBackgroundColor?.('#080a13');
+  tg.setBottomBarColor?.('#080a13');
 }
 
-function escapeText(value) {
-  return String(value ?? '');
+function authHeaders() {
+  return initData ? { 'X-Telegram-Init-Data': initData } : {};
+}
+
+async function api(path, options = {}) {
+  const response = await fetch(path, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders(),
+      ...(options.headers || {}),
+    },
+  });
+  if (!response.ok) {
+    let message = `Xatolik: ${response.status}`;
+    try { message = (await response.json()).detail || message; } catch (_) {}
+    throw new Error(message);
+  }
+  return response.json();
 }
 
 function posterUrl(code) {
   return `/api/poster/${encodeURIComponent(code)}`;
 }
 
+function haptic(type = 'selection') {
+  if (type === 'success') tg?.HapticFeedback?.notificationOccurred?.('success');
+  else tg?.HapticFeedback?.selectionChanged?.();
+}
+
+function fullName(user) {
+  return [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Telegram foydalanuvchisi';
+}
+
+function firstLetter(user) {
+  return (user?.first_name?.[0] || user?.username?.[0] || 'D').toUpperCase();
+}
+
+function setAvatar(element, user) {
+  element.textContent = firstLetter(user);
+  const url = user?.photo_url;
+  if (url) {
+    element.style.backgroundImage = `url("${String(url).replaceAll('"', '%22')}")`;
+    element.textContent = '';
+  } else {
+    element.style.backgroundImage = '';
+  }
+}
+
 function movieCard(movie) {
   const button = document.createElement('button');
-  button.className = 'movie-card';
   button.type = 'button';
-  button.dataset.code = movie.code;
+  button.className = 'movie-card';
 
-  const poster = document.createElement('div');
-  poster.className = 'poster';
+  const posterWrap = document.createElement('span');
+  posterWrap.className = 'poster-wrap';
   const image = document.createElement('img');
-  image.src = posterUrl(movie.code);
-  image.alt = escapeText(movie.name);
+  image.className = 'poster';
   image.loading = 'lazy';
-  image.decoding = 'async';
+  image.alt = movie.name || 'Kino posteri';
+  image.src = posterUrl(movie.code);
   image.onerror = () => { image.src = '/static/placeholder.svg'; };
-  const badge = document.createElement('span');
-  badge.className = 'code-badge';
-  badge.textContent = `#${movie.code}`;
-  poster.append(image, badge);
+  const code = document.createElement('span');
+  code.className = 'code-label';
+  code.textContent = `#${movie.code}`;
+  posterWrap.append(image, code);
 
   const title = document.createElement('span');
   title.className = 'card-title';
@@ -71,15 +100,9 @@ function movieCard(movie) {
   const meta = document.createElement('span');
   meta.className = 'card-meta';
   meta.textContent = [movie.year, movie.genre].filter(Boolean).join(' • ') || 'Kino';
-  button.append(poster, title, meta);
+  button.append(posterWrap, title, meta);
   button.addEventListener('click', () => openMovie(movie.code));
   return button;
-}
-
-function renderMovies(container, movies, grid = false) {
-  container.replaceChildren();
-  movies.forEach((movie) => container.append(movieCard(movie)));
-  if (grid && !movies.length) $('#emptyState').classList.remove('hidden');
 }
 
 function renderSkeletons(container, count = 6) {
@@ -87,112 +110,220 @@ function renderSkeletons(container, count = 6) {
   for (let i = 0; i < count; i += 1) {
     const card = document.createElement('div');
     card.className = 'movie-card';
-    card.innerHTML = '<div class="poster skeleton"></div><span class="card-title skeleton">&nbsp;</span><span class="card-meta skeleton">&nbsp;</span>';
+    card.innerHTML = '<span class="poster-wrap skeleton"></span><span class="card-title skeleton">&nbsp;</span><span class="card-meta skeleton">&nbsp;</span>';
     container.append(card);
   }
 }
 
-function setHero(movie) {
-  if (!movie) return;
-  const hero = $('#hero');
-  hero.classList.remove('skeleton-block');
-  hero.style.backgroundImage = `url("${posterUrl(movie.code)}")`;
-  $('#heroTitle').textContent = movie.name;
+function renderMovieList(container, items) {
+  container.replaceChildren(...(items || []).map(movieCard));
+}
+
+function renderStories(items) {
+  const strip = $('#storyStrip');
+  strip.replaceChildren();
+  (items || []).slice(0, 10).forEach((movie) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'story-item';
+    const ring = document.createElement('span');
+    ring.className = 'story-ring';
+    const image = document.createElement('img');
+    image.className = 'story-image';
+    image.loading = 'lazy';
+    image.alt = movie.name || 'Tavsiya';
+    image.src = posterUrl(movie.code);
+    image.onerror = () => { image.src = '/static/placeholder.svg'; };
+    ring.append(image);
+    const label = document.createElement('small');
+    label.textContent = movie.name || `#${movie.code}`;
+    button.append(ring, label);
+    button.addEventListener('click', () => openMovie(movie.code));
+    strip.append(button);
+  });
+}
+
+function setHero(index) {
+  const slides = state.home?.featured || [];
+  if (!slides.length) return;
+  state.heroIndex = (index + slides.length) % slides.length;
+  const movie = slides[state.heroIndex];
+  $('#heroCarousel').classList.remove('skeleton-block');
+  $('#heroBackdrop').style.backgroundImage = `url("${posterUrl(movie.code)}")`;
+  $('#heroTitle').textContent = movie.name || 'xD KINO';
   $('#heroMeta').textContent = [movie.year, movie.country, movie.genre].filter(Boolean).join(' • ');
   $('#heroWatch').onclick = () => watchMovie(movie.code);
   $('#heroInfo').onclick = () => openMovie(movie.code);
+  $$('.hero-dot').forEach((dot, dotIndex) => dot.classList.toggle('active', dotIndex === state.heroIndex));
 }
 
-async function loadHome() {
-  state.currentView = 'home';
-  updateNav('home');
-  $('#resultsSection').classList.add('hidden');
-  $('#emptyState').classList.add('hidden');
-  $$('.content-section').forEach((section) => {
-    if (section.id !== 'resultsSection') section.classList.remove('hidden');
+function resetHeroTimer() {
+  clearInterval(state.heroTimer);
+  state.heroTimer = setInterval(() => setHero(state.heroIndex + 1), 5200);
+}
+
+function renderHero(items) {
+  const dots = $('#heroDots');
+  dots.replaceChildren();
+  (items || []).forEach((_, index) => {
+    const dot = document.createElement('span');
+    dot.className = `hero-dot${index === 0 ? ' active' : ''}`;
+    dots.append(dot);
   });
-  $('#hero').classList.remove('hidden');
-  renderSkeletons($('#popularRow'));
-  renderSkeletons($('#newRow'));
-  try {
-    const data = await api('/api/home');
-    state.home = data;
-    setHero(data.featured?.[0] || data.popular?.[0]);
-    renderMovies($('#popularRow'), data.popular || []);
-    renderMovies($('#newRow'), data.new || []);
-  } catch (error) {
-    showToast(error.message);
-  }
+  setHero(0);
+  resetHeroTimer();
 }
 
-async function loadGenres() {
-  try {
-    const data = await api('/api/genres');
-    const chips = $('#genreChips');
-    chips.replaceChildren();
-    const all = createChip('Barchasi', '');
-    all.classList.add('active');
-    chips.append(all);
-    data.items.slice(0, 18).forEach((item) => chips.append(createChip(item.genre, item.genre)));
-  } catch (_) {
-    // Katalog ishlashda davom etadi.
-  }
+function renderGenres(items) {
+  state.genres = items || [];
+  const strip = $('#genreStrip');
+  const chips = $('#searchChips');
+  strip.replaceChildren();
+  chips.replaceChildren();
+
+  const allChip = createChip('Barchasi', '');
+  allChip.classList.add('active');
+  chips.append(allChip);
+
+  state.genres.slice(0, 14).forEach((item) => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'genre-card';
+    const strong = document.createElement('strong');
+    strong.textContent = item.genre;
+    card.append(strong);
+    card.addEventListener('click', () => {
+      state.search.genre = item.genre;
+      openView('search');
+      searchMovies(true);
+    });
+    strip.append(card);
+    chips.append(createChip(item.genre, item.genre));
+  });
 }
 
 function createChip(label, value) {
-  const button = document.createElement('button');
-  button.className = 'chip';
-  button.type = 'button';
-  button.textContent = label;
-  button.dataset.genre = value;
-  button.addEventListener('click', () => {
-    state.selectedGenre = value;
-    $$('.chip').forEach((chip) => chip.classList.toggle('active', chip === button));
+  const chip = document.createElement('button');
+  chip.type = 'button';
+  chip.className = 'chip';
+  chip.textContent = label;
+  chip.addEventListener('click', () => {
+    state.search.genre = value;
+    $$('#searchChips .chip').forEach((item) => item.classList.toggle('active', item === chip));
     searchMovies(true);
   });
-  return button;
+  return chip;
 }
 
-async function searchMovies(reset = true, sort = 'popular') {
-  if (reset) state.page = 1;
-  const params = new URLSearchParams({
-    q: state.query,
-    genre: state.selectedGenre,
-    sort,
-    page: String(state.page),
-    limit: '24',
+function renderSections(sections) {
+  const root = $('#homeSections');
+  root.replaceChildren();
+  (sections || []).forEach((section) => {
+    const wrapper = document.createElement('section');
+    wrapper.className = 'content-block';
+    const heading = document.createElement('div');
+    heading.className = 'section-heading';
+    const title = document.createElement('h2');
+    title.textContent = section.title;
+    const all = document.createElement('button');
+    all.type = 'button';
+    all.textContent = 'Barchasi →';
+    all.addEventListener('click', () => {
+      state.search = {
+        q: '',
+        genre: section.filters?.genre || '',
+        country: section.filters?.country || '',
+        sort: section.filters?.sort || 'popular',
+        page: 1,
+        total: 0,
+      };
+      openView('search');
+      searchMovies(true);
+    });
+    heading.append(title, all);
+    const row = document.createElement('div');
+    row.className = 'movie-row';
+    renderMovieList(row, section.items);
+    wrapper.append(heading, row);
+    root.append(wrapper);
   });
-  const grid = $('#resultsGrid');
-  if (reset) renderSkeletons(grid, 8);
-  $('#resultsSection').classList.remove('hidden');
-  $('#emptyState').classList.add('hidden');
-  $('#hero').classList.add('hidden');
-  $$('.content-section').forEach((section) => {
-    if (section.id !== 'resultsSection') section.classList.add('hidden');
-  });
+}
+
+async function loadHome() {
   try {
-    const data = await api(`/api/movies?${params}`);
-    state.total = data.total;
-    const existing = reset ? [] : [...grid.querySelectorAll('.movie-card')].map(() => null);
-    if (reset) grid.replaceChildren();
-    data.items.forEach((movie) => grid.append(movieCard(movie)));
-    $('#resultsCount').textContent = `${data.total} ta`;
-    $('#resultsTitle').textContent = state.query ? `“${state.query}” natijalari` : (state.selectedGenre || 'Barcha kinolar');
-    $('#loadMore').classList.toggle('hidden', grid.children.length >= data.total);
-    $('#emptyState').classList.toggle('hidden', data.total !== 0);
-    if (!existing.length && !data.items.length) grid.replaceChildren();
+    const data = await api('/api/home');
+    state.home = data;
+    renderStories(data.stories || data.popular || []);
+    renderHero(data.featured || data.popular || []);
+    renderGenres(data.genres || []);
+    renderSections(data.sections || [
+      { title: '🔥 Ommabop', items: data.popular || [], filters: { sort: 'popular' } },
+      { title: '✨ Yangi qo‘shilganlar', items: data.new || [], filters: { sort: 'new' } },
+    ]);
+    $('#searchTotal').textContent = `${data.sections?.find((item) => item.key === 'new')?.total || 91} ta`;
   } catch (error) {
     showToast(error.message);
   }
+}
+
+function openView(name) {
+  state.currentView = name;
+  ['home', 'search', 'profile'].forEach((view) => {
+    $(`#${view}View`).classList.toggle('hidden', view !== name);
+  });
+  $$('.nav-item').forEach((item) => item.classList.toggle('active', item.dataset.nav === name));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  haptic();
+  if (name === 'profile') loadProfile();
+  if (name === 'search' && !$('#searchGrid').children.length) searchMovies(true);
+}
+
+async function searchMovies(reset = true) {
+  if (reset) state.search.page = 1;
+  const params = new URLSearchParams({
+    q: state.search.q,
+    genre: state.search.genre,
+    country: state.search.country,
+    sort: state.search.sort,
+    page: String(state.search.page),
+    limit: '24',
+  });
+  const grid = $('#searchGrid');
+  if (reset) renderSkeletons(grid, 9);
+  $('#emptyState').classList.add('hidden');
+  try {
+    const data = await api(`/api/movies?${params}`);
+    state.search.total = data.total;
+    if (reset) grid.replaceChildren();
+    data.items.forEach((movie) => grid.append(movieCard(movie)));
+    $('#searchCount').textContent = `${data.total} ta`;
+    $('#searchHeading').textContent = state.search.q
+      ? `“${state.search.q}” natijalari`
+      : (state.search.genre || state.search.country || 'Tavsiyalar');
+    $('#loadMore').classList.toggle('hidden', grid.children.length >= data.total);
+    $('#emptyState').classList.toggle('hidden', data.total !== 0);
+    if (!data.total) grid.replaceChildren();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function loadFavoritesCache() {
+  if (!initData) return;
+  try {
+    const data = await api('/api/favorites');
+    state.favorites = new Set(data.items.map((movie) => Number(movie.code)));
+  } catch (_) {}
 }
 
 async function openMovie(code) {
   try {
     const movie = await api(`/api/movies/${code}`);
     state.currentMovie = movie;
-    $('#modalTitle').textContent = movie.name;
+    $('#modalCode').textContent = `#${movie.code}`;
+    $('#modalTitle').textContent = movie.name || 'Kino';
     $('#modalMeta').textContent = [movie.year, movie.country, movie.language, movie.imdb ? `IMDb ${movie.imdb}` : ''].filter(Boolean).join(' • ');
-    $('#modalGenres').textContent = movie.genre || 'Janr ko‘rsatilmagan';
+    $('#modalGenre').textContent = movie.genre || 'Janr ko‘rsatilmagan';
     $('#modalPoster').style.backgroundImage = `url("${posterUrl(movie.code)}")`;
     const qualities = $('#qualityList');
     qualities.replaceChildren();
@@ -202,12 +333,14 @@ async function openMovie(code) {
       pill.textContent = quality;
       qualities.append(pill);
     });
+    const favorite = state.favorites.has(Number(movie.code));
+    $('#favoriteButton').classList.toggle('active', favorite);
+    $('#favoriteButton').textContent = favorite ? '♥' : '♡';
     $('#modalWatch').onclick = () => watchMovie(movie.code);
     $('#favoriteButton').onclick = () => toggleFavorite(movie.code);
-    $('#favoriteButton').classList.remove('active');
-    $('#favoriteButton').textContent = '♡';
     $('#movieModal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+    tg?.BackButton?.show?.();
   } catch (error) {
     showToast(error.message);
   }
@@ -216,89 +349,81 @@ async function openMovie(code) {
 function closeMovie() {
   $('#movieModal').classList.add('hidden');
   document.body.style.overflow = '';
+  tg?.BackButton?.hide?.();
 }
 
 async function toggleFavorite(code) {
   if (!initData) {
-    showToast('Sevimlilar uchun Mini Appni Telegram ichida oching.');
+    showToast('Sevimlilar Telegram Mini App ichida ishlaydi.');
     return;
   }
-  const button = $('#favoriteButton');
-  const enabled = !button.classList.contains('active');
+  const numericCode = Number(code);
+  const enabled = !state.favorites.has(numericCode);
   try {
-    await api('/api/favorites', {
-      method: 'POST',
-      body: JSON.stringify({ movie_code: code, enabled }),
-    });
-    button.classList.toggle('active', enabled);
-    button.textContent = enabled ? '♥' : '♡';
-    tg?.HapticFeedback?.notificationOccurred?.('success');
-  } catch (error) {
-    showToast(error.message);
-  }
-}
-
-async function loadFavorites() {
-  state.currentView = 'favorites';
-  updateNav('favorites');
-  if (!initData) {
-    showToast('Sevimlilar Telegram ichida ishlaydi.');
-    openProfile();
-    return;
-  }
-  $('#hero').classList.add('hidden');
-  $$('.content-section').forEach((section) => section.classList.add('hidden'));
-  $('#resultsSection').classList.remove('hidden');
-  $('#resultsTitle').textContent = 'Sevimlilar';
-  $('#resultsCount').textContent = '';
-  renderSkeletons($('#resultsGrid'), 8);
-  try {
-    const data = await api('/api/favorites');
-    renderMovies($('#resultsGrid'), data.items, true);
-    $('#resultsCount').textContent = `${data.items.length} ta`;
-    $('#loadMore').classList.add('hidden');
-    $('#emptyState').classList.toggle('hidden', data.items.length !== 0);
+    await api('/api/favorites', { method: 'POST', body: JSON.stringify({ movie_code: numericCode, enabled }) });
+    if (enabled) state.favorites.add(numericCode); else state.favorites.delete(numericCode);
+    $('#favoriteButton').classList.toggle('active', enabled);
+    $('#favoriteButton').textContent = enabled ? '♥' : '♡';
+    haptic('success');
   } catch (error) {
     showToast(error.message);
   }
 }
 
 async function watchMovie(code) {
-  if (initData) {
-    api('/api/history', { method: 'POST', body: JSON.stringify({ movie_code: code }) }).catch(() => {});
-  }
+  if (initData) api('/api/history', { method: 'POST', body: JSON.stringify({ movie_code: Number(code) }) }).catch(() => {});
   const link = `https://t.me/${state.config.bot_username}?start=movie_${code}`;
   if (tg?.openTelegramLink) tg.openTelegramLink(link);
   else window.location.href = link;
 }
 
-function openSearch() {
-  $('#searchPanel').classList.remove('hidden');
-  $('#searchInput').focus();
-  updateNav('search');
+async function loadProfile() {
+  const fallback = state.user || initUser;
+  setAvatar($('#profileAvatar'), fallback);
+  $('#profileName').textContent = fullName(fallback);
+  $('#profileUsername').textContent = fallback?.username ? `@${fallback.username}` : 'Username mavjud emas';
+  $('#profileId').textContent = fallback?.id ? String(fallback.id) : '—';
+  if (!initData) return;
+  try {
+    const data = await api('/api/profile');
+    state.user = { ...fallback, ...data, id: data.user_id };
+    setAvatar($('#profileAvatar'), state.user);
+    setAvatar($('#topAvatar'), state.user);
+    $('#profileName').textContent = fullName(state.user);
+    $('#profileUsername').textContent = data.username ? `@${data.username}` : 'Username mavjud emas';
+    $('#profileId').textContent = String(data.user_id || '—');
+    $('#profileBalance').textContent = `${Number(data.balance || 0).toLocaleString('uz-UZ')} so‘m`;
+    $('#profilePlan').textContent = data.plan || 'Bepul';
+    $('#favoritesCount').textContent = `${data.favorites_count || 0} ta kino`;
+    $('#historyCount').textContent = `${data.history_count || 0} ta yozuv`;
+  } catch (error) {
+    showToast(error.message);
+  }
 }
 
-function closeSearch() {
-  $('#searchPanel').classList.add('hidden');
-  if (!state.query && !state.selectedGenre) loadHome();
+async function loadCollection(type) {
+  if (!initData) {
+    showToast('Bu bo‘lim Telegram Mini App ichida ishlaydi.');
+    return;
+  }
+  const title = type === 'favorites' ? 'Sevimlilar' : 'Tomosha tarixi';
+  $('#collectionTitle').textContent = title;
+  $('#profileCollection').classList.remove('hidden');
+  renderSkeletons($('#collectionGrid'), 6);
+  $('#collectionEmpty').classList.add('hidden');
+  try {
+    const data = await api(type === 'favorites' ? '/api/favorites' : '/api/history');
+    renderMovieList($('#collectionGrid'), data.items);
+    $('#collectionEmpty').classList.toggle('hidden', data.items.length !== 0);
+  } catch (error) {
+    showToast(error.message);
+  }
 }
 
-function openProfile() {
-  const user = state.user;
-  $('#profileAvatar').textContent = (user?.first_name?.[0] || 'D').toUpperCase();
-  $('#profileName').textContent = user ? [user.first_name, user.last_name].filter(Boolean).join(' ') : 'Mehmon';
-  $('#profileUsername').textContent = user?.username ? `@${user.username}` : 'Telegram ichida oching';
-  $('#profileSheet').classList.remove('hidden');
-  updateNav('profile');
-}
-
-function closeProfile() {
-  $('#profileSheet').classList.add('hidden');
-  updateNav(state.currentView === 'favorites' ? 'favorites' : 'home');
-}
-
-function updateNav(action) {
-  $$('.nav-item').forEach((item) => item.classList.toggle('active', item.dataset.action === action));
+function openBot() {
+  const link = `https://t.me/${state.config.bot_username}`;
+  if (tg?.openTelegramLink) tg.openTelegramLink(link);
+  else window.location.href = link;
 }
 
 let toastTimer;
@@ -307,47 +432,52 @@ function showToast(message) {
   toast.textContent = message;
   toast.classList.remove('hidden');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.add('hidden'), 3000);
+  toastTimer = setTimeout(() => toast.classList.add('hidden'), 3200);
 }
 
 let searchTimer;
 $('#searchInput').addEventListener('input', (event) => {
-  state.query = event.target.value.trim();
+  state.search.q = event.target.value.trim();
+  state.search.country = '';
   clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => searchMovies(true), 350);
+  searchTimer = setTimeout(() => searchMovies(true), 320);
 });
-$('#searchOpen').addEventListener('click', openSearch);
-$('#searchClose').addEventListener('click', closeSearch);
+$('#clearSearch').addEventListener('click', () => {
+  $('#searchInput').value = '';
+  state.search.q = '';
+  state.search.genre = '';
+  state.search.country = '';
+  state.search.sort = 'popular';
+  $$('#searchChips .chip').forEach((chip, index) => chip.classList.toggle('active', index === 0));
+  searchMovies(true);
+});
+$('#topSearch').addEventListener('click', () => { openView('search'); setTimeout(() => $('#searchInput').focus(), 100); });
+$('#topAvatar').addEventListener('click', () => openView('profile'));
+$('#allGenres').addEventListener('click', () => { openView('search'); $('#searchInput').focus(); });
+$('#heroPrev').addEventListener('click', () => { setHero(state.heroIndex - 1); resetHeroTimer(); });
+$('#heroNext').addEventListener('click', () => { setHero(state.heroIndex + 1); resetHeroTimer(); });
 $('#modalClose').addEventListener('click', closeMovie);
 $('#modalBackdrop').addEventListener('click', closeMovie);
-$('#profileButton').addEventListener('click', openProfile);
-$$('[data-close-profile]').forEach((button) => button.addEventListener('click', closeProfile));
-$('#loadMore').addEventListener('click', () => { state.page += 1; searchMovies(false); });
-$$('[data-view]').forEach((button) => button.addEventListener('click', () => {
-  state.query = '';
-  state.selectedGenre = '';
-  searchMovies(true, button.dataset.view);
-}));
-$$('[data-action]').forEach((button) => button.addEventListener('click', () => {
-  const action = button.dataset.action;
-  if (action === 'home') loadHome();
-  if (action === 'search') openSearch();
-  if (action === 'favorites') loadFavorites();
-  if (action === 'profile') openProfile();
-}));
+$('#loadMore').addEventListener('click', () => { state.search.page += 1; searchMovies(false); });
+$('#profileFavorites').addEventListener('click', () => loadCollection('favorites'));
+$('#profileHistory').addEventListener('click', () => loadCollection('history'));
+$('#openBot').addEventListener('click', openBot);
+$('#closeCollection').addEventListener('click', () => $('#profileCollection').classList.add('hidden'));
+$$('[data-nav]').forEach((button) => button.addEventListener('click', () => openView(button.dataset.nav)));
 
-document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape') {
-    closeMovie();
-    closeProfile();
-  }
-});
+tg?.BackButton?.onClick?.(closeMovie);
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeMovie(); });
 
 async function boot() {
+  setAvatar($('#topAvatar'), state.user);
+  const minimumSplash = new Promise((resolve) => setTimeout(resolve, 650));
   try {
-    state.config = await api('/api/config');
-  } catch (_) {}
-  await Promise.all([loadHome(), loadGenres()]);
+    const configPromise = api('/api/config').then((data) => { state.config = data; }).catch(() => {});
+    await Promise.all([configPromise, loadHome(), loadFavoritesCache(), minimumSplash]);
+  } finally {
+    $('#splash').classList.add('done');
+    setTimeout(() => $('#splash').remove(), 450);
+  }
 }
 
 boot();

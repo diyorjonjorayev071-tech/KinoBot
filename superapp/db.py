@@ -231,10 +231,43 @@ class Database:
             return {"database": "ok", "movies": int(cur.fetchone()["count"])}
 
     def home(self, limit: int = 12) -> dict[str, Any]:
+        featured = self.list_movies(limit=6, sort="popular")["items"]
+        popular = self.list_movies(limit=limit, sort="popular")["items"]
+        new_items = self.list_movies(limit=limit, sort="new")["items"]
+
+        section_specs = [
+            ("new", "✨ Yangi qo‘shilganlar", {"sort": "new"}),
+            ("popular", "🔥 Ommabop", {"sort": "popular"}),
+            ("usa", "🇺🇸 AQSH kinolari", {"country": "AQSH", "sort": "popular"}),
+            ("india", "🇮🇳 Hind kinolari", {"country": "Hind", "sort": "popular"}),
+            ("korea", "🇰🇷 Koreya kinolari", {"country": "Koreya", "sort": "popular"}),
+            ("turkey", "🇹🇷 Turk kinolari", {"country": "Turkiya", "sort": "popular"}),
+            ("horror", "👻 Qo‘rqinchli", {"genre": "Qo‘rqinchli", "sort": "popular"}),
+            ("action", "💥 Jangari", {"genre": "Jangari", "sort": "popular"}),
+            ("adventure", "🧭 Sarguzasht", {"genre": "Sarguzasht", "sort": "popular"}),
+        ]
+        sections: list[dict[str, Any]] = []
+        for key, title, filters in section_specs:
+            result = self.list_movies(limit=limit, **filters)
+            if result["items"]:
+                sections.append(
+                    {
+                        "key": key,
+                        "title": title,
+                        "items": result["items"],
+                        "total": result["total"],
+                        "filters": filters,
+                    }
+                )
+
         return {
-            "featured": self.list_movies(limit=1, sort="popular")["items"],
-            "popular": self.list_movies(limit=limit, sort="popular")["items"],
-            "new": self.list_movies(limit=limit, sort="new")["items"],
+            "featured": featured,
+            "stories": (new_items + popular)[:10],
+            "genres": self.genres()[:12],
+            "sections": sections,
+            # v1 frontend bilan orqaga moslik.
+            "popular": popular,
+            "new": new_items,
         }
 
     def list_movies(
@@ -322,16 +355,22 @@ class Database:
     def genres(self) -> list[dict[str, Any]]:
         pool = self._require_pool()
         with pool.connection() as conn, conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT genre, COUNT(*) AS count
-                FROM movies
-                WHERE TRIM(genre) <> ''
-                GROUP BY genre
-                ORDER BY count DESC, genre ASC
-                """
+            cur.execute("SELECT genre FROM movies WHERE TRIM(genre) <> ''")
+            rows = cur.fetchall()
+
+        counts: dict[str, int] = {}
+        for row in rows:
+            raw = str(row["genre"] or "")
+            for part in raw.replace("/", ",").split(","):
+                genre = part.strip()
+                if genre:
+                    counts[genre] = counts.get(genre, 0) + 1
+        return [
+            {"genre": genre, "count": count}
+            for genre, count in sorted(
+                counts.items(), key=lambda item: (-item[1], item[0].lower())
             )
-            return [dict(row) for row in cur.fetchall()]
+        ]
 
     def upsert_user(self, user) -> dict[str, Any]:
         pool = self._require_pool()
@@ -419,3 +458,53 @@ class Database:
             )
             cur.execute("UPDATE movies SET views=views+1 WHERE code=%s", (movie_code,))
             conn.commit()
+
+    def profile(self, user_id: int) -> dict[str, Any]:
+        pool = self._require_pool()
+        with pool.connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT user_id, first_name, last_name, username,
+                       language_code, photo_url, created_at, last_seen_at
+                FROM app_users WHERE user_id=%s
+                """,
+                (user_id,),
+            )
+            row = cur.fetchone()
+            if not row:
+                return {}
+            profile = dict(row)
+            cur.execute(
+                "SELECT COUNT(*) AS count FROM favorites WHERE user_id=%s",
+                (user_id,),
+            )
+            profile["favorites_count"] = int(cur.fetchone()["count"])
+            cur.execute(
+                "SELECT COUNT(*) AS count FROM watch_history WHERE user_id=%s",
+                (user_id,),
+            )
+            profile["history_count"] = int(cur.fetchone()["count"])
+            profile["plan"] = "Bepul"
+            profile["balance"] = 0
+            return profile
+
+    def history(self, user_id: int, limit: int = 40) -> list[dict[str, Any]]:
+        pool = self._require_pool()
+        with pool.connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT DISTINCT ON (m.code)
+                       m.code, m.name, m.year, m.country, m.genre, m.language,
+                       m.imdb, m.views, (m.poster_file_id <> '') AS has_poster,
+                       h.opened_at
+                FROM watch_history h
+                JOIN movies m ON m.code=h.movie_code
+                WHERE h.user_id=%s
+                ORDER BY m.code, h.opened_at DESC
+                """,
+                (user_id,),
+            )
+            rows = [dict(row) for row in cur.fetchall()]
+        rows.sort(key=lambda item: item.get("opened_at"), reverse=True)
+        return rows[:limit]
+

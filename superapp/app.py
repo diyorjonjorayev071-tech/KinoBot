@@ -47,7 +47,7 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(
     title=f"{APP_NAME} Super App API",
-    version="1.0.0-staging",
+    version="2.0.0-staging",
     lifespan=lifespan,
     docs_url="/api/docs",
     redoc_url=None,
@@ -178,6 +178,16 @@ def genres():
 @app.get("/api/me")
 def me(user: TelegramUser = Depends(verified_user)):
     return db.upsert_user(user)
+
+
+@app.get("/api/profile")
+def profile(user: TelegramUser = Depends(verified_user)):
+    return db.profile(user.id)
+
+
+@app.get("/api/history")
+def history(user: TelegramUser = Depends(verified_user)):
+    return {"items": db.history(user.id)}
 
 
 @app.get("/api/favorites")
