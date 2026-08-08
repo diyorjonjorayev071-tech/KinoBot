@@ -9,6 +9,37 @@ from handlers.admin_ui import admin_edit_keyboard, admin_movie_text
 from states import movie_data, user_states
 
 
+
+async def _ask_quality_name(message):
+    await message.reply_text(
+        "\U0001F39E Birinchi video sifatini yuboring.\n"
+        "Masalan: <code>360p</code>, <code>480p</code>, "
+        "<code>720p</code>, <code>1080p</code> yoki <code>Original</code>",
+        parse_mode="HTML",
+    )
+
+
+async def _continue_after_poster(user_id: int, message):
+    content_type = str(
+        movie_data.get(user_id, {}).get("content_type", "")
+    ).strip().lower()
+
+    if content_type == "kino":
+        user_states[user_id] = "add_promo"
+
+        await message.reply_text(
+            "\U0001F4E2 <b>Kanal uchun promo yuboring</b>\n\n"
+            "\U0001F3AC Qisqa promo video yoki \U0001F5BC rasm yuboring.\n\n"
+            "\u26A0\uFE0F <b>Bu yerda to\u2018liq kinoni yubormang.</b>\n"
+            "Keyingi bosqichda to\u2018liq kino alohida so\u2018raladi.",
+            parse_mode="HTML",
+        )
+        return
+
+    user_states[user_id] = "add_quality_name"
+    await _ask_quality_name(message)
+
+
 async def start_movie_add(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id != ADMIN_ID:
@@ -123,13 +154,7 @@ async def movie_add_text_handler(update: Update, context: ContextTypes.DEFAULT_T
 
     if state == "add_poster" and text.lower() == "skip":
         movie_data[user_id]["poster_file_id"] = ""
-        user_states[user_id] = "add_quality_name"
-        await update.message.reply_text(
-            "🎞 Birinchi video sifatini yuboring.\n"
-            "Masalan: <code>360p</code>, <code>480p</code>, "
-            "<code>720p</code>, <code>1080p</code> yoki <code>Original</code>",
-            parse_mode="HTML",
-        )
+        await _continue_after_poster(user_id, update.message)
         return
 
     if state == "add_quality_name":
@@ -151,28 +176,63 @@ async def movie_add_text_handler(update: Update, context: ContextTypes.DEFAULT_T
 
 async def movie_add_photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    if user_id != ADMIN_ID or user_states.get(user_id) != "add_poster":
+    state = user_states.get(user_id)
+
+    if user_id != ADMIN_ID or state not in {"add_poster", "add_promo"}:
         return
 
     photo = update.message.photo[-1]
+
+    if state == "add_promo":
+        movie_data.setdefault(user_id, {})["promo_media_type"] = "photo"
+        movie_data[user_id]["promo_file_id"] = photo.file_id
+
+        user_states[user_id] = "add_quality_name"
+
+        await update.message.reply_text(
+            "\u2705 Kanal uchun promo rasm qabul qilindi."
+        )
+
+        await _ask_quality_name(update.message)
+        return
+
     movie_data.setdefault(user_id, {})["poster_file_id"] = photo.file_id
-    user_states[user_id] = "add_quality_name"
+
     await update.message.reply_text(
-        "✅ Poster qabul qilindi.\n\n"
-        "🎞 Birinchi video sifatini yuboring.\n"
-        "Masalan: <code>360p</code>, <code>480p</code>, "
-        "<code>720p</code>, <code>1080p</code> yoki <code>Original</code>",
-        parse_mode="HTML",
+        "\u2705 Poster qabul qilindi."
     )
+
+    await _continue_after_poster(user_id, update.message)
 
 
 async def movie_add_video_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    if user_id != ADMIN_ID or user_states.get(user_id) != "add_video":
+    state = user_states.get(user_id)
+
+    if user_id != ADMIN_ID:
+        return
+
+    if state == "add_promo":
+        movie_data.setdefault(user_id, {})["promo_media_type"] = "video"
+        movie_data[user_id]["promo_file_id"] = update.message.video.file_id
+
+        user_states[user_id] = "add_quality_name"
+
+        await update.message.reply_text(
+            "\u2705 Kanal uchun promo video qabul qilindi."
+        )
+
+        await _ask_quality_name(update.message)
+        return
+
+    if state != "add_video":
         return
 
     data = movie_data.get(user_id, {})
     required = ["content_type", "name", "year", "country", "genre", "language", "imdb", "is_recommended", "description", "quality"]
+
+    if str(data.get("content_type", "")).strip().lower() == "kino":
+        required += ["promo_media_type", "promo_file_id"]
     if any(key not in data for key in required):
         user_states.pop(user_id, None)
         movie_data.pop(user_id, None)
@@ -197,9 +257,9 @@ async def movie_add_video_handler(update: Update, context: ContextTypes.DEFAULT_
         description=data.get("description", ""),
     )
 
-    # CHANNEL_POST_V1
-    # Kino saqlangandan keyin kanal posti yuboriladi.
-    # Kanal posti xatosi asosiy saqlash jarayonini to'xtatmaydi.
+    # CHANNEL_POST_V2
+    # Kanalga faqat PROMO media yuboriladi.
+    # To'liq kino videosi kanalga yuborilmaydi.
     if str(data.get("content_type", "")).strip().lower() == "kino":
         try:
             bot_username = "xDKinoCodeBot"
@@ -228,17 +288,29 @@ async def movie_add_video_handler(update: Update, context: ContextTypes.DEFAULT_
                 ]
             )
 
-            await context.bot.send_video(
-                chat_id=CHANNEL_USERNAME,
-                video=update.message.video.file_id,
-                caption=channel_caption,
-                parse_mode="HTML",
-                reply_markup=channel_keyboard,
-            )
+            promo_type = data["promo_media_type"]
+            promo_file_id = data["promo_file_id"]
+
+            if promo_type == "photo":
+                await context.bot.send_photo(
+                    chat_id=CHANNEL_USERNAME,
+                    photo=promo_file_id,
+                    caption=channel_caption,
+                    parse_mode="HTML",
+                    reply_markup=channel_keyboard,
+                )
+            else:
+                await context.bot.send_video(
+                    chat_id=CHANNEL_USERNAME,
+                    video=promo_file_id,
+                    caption=channel_caption,
+                    parse_mode="HTML",
+                    reply_markup=channel_keyboard,
+                )
 
         except Exception as exc:
             await update.message.reply_text(
-                "\u26A0\uFE0F <b>Kino saqlandi, lekin kanalga post yuborilmadi.</b>\n\n"
+                "\u26A0\uFE0F <b>Kino saqlandi, lekin kanalga promo post yuborilmadi.</b>\n\n"
                 f"<code>{escape(str(exc))}</code>",
                 parse_mode="HTML",
             )
