@@ -240,21 +240,32 @@ async def movie_add_video_handler(update: Update, context: ContextTypes.DEFAULT_
         )
         return
 
-    code = add_movie(
-        name=data["name"],
-        year=data["year"],
-        country=data["country"],
-        genre=data["genre"],
-        language=data["language"],
-        imdb=data["imdb"],
-        trailer_file_id="",
-        poster_file_id=data.get("poster_file_id", ""),
-        file_id=update.message.video.file_id,
-        quality=data["quality"],
-        content_type=data["content_type"],
-        is_recommended=data["is_recommended"],
-        description=data.get("description", ""),
-    )
+    import inspect
+
+    movie_kwargs = {
+        "name": data["name"],
+        "year": data["year"],
+        "country": data["country"],
+        "genre": data["genre"],
+        "language": data["language"],
+        "imdb": data["imdb"],
+        "trailer_file_id": "",
+        "poster_file_id": data.get("poster_file_id", ""),
+        "file_id": update.message.video.file_id,
+        "quality": data["quality"],
+        "content_type": data["content_type"],
+        "is_recommended": data["is_recommended"],
+        "description": data.get("description", ""),
+    }
+
+    supported = inspect.signature(add_movie).parameters
+    movie_kwargs = {
+        key: value
+        for key, value in movie_kwargs.items()
+        if key in supported
+    }
+
+    code = add_movie(**movie_kwargs)
 
     # CHANNEL_POST_V2
     # Kanalga faqat PROMO media yuboriladi.
