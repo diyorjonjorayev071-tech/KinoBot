@@ -22,6 +22,8 @@ def admin_movie_text(code: int) -> str:
         _file_id,
         views,
         _created_at,
+        content_type,
+        is_recommended,
     ) = movie
     qualities = get_movie_quality_rows(code)
     quality_text = ", ".join(escape(str(row[1])) for row in qualities) or "yo‘q"
@@ -29,6 +31,8 @@ def admin_movie_text(code: int) -> str:
     return (
         "✏️ <b>Kino tahrirlash</b>\n\n"
         f"🔑 Kod: <code>{code}</code>\n"
+        f"📚 Turi: {escape(str(content_type or 'Kino'))}\n"
+        f"⭐ Xususiy tavsiya: {'Ha' if is_recommended else 'Yo‘q'}\n"
         f"🎬 Nomi: {escape(str(name))}\n"
         f"📅 Yili: {escape(str(year or '-'))}\n"
         f"🌍 Davlati: {escape(str(country or '-'))}\n"
