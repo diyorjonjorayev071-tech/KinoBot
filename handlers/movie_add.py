@@ -103,8 +103,7 @@ async def movie_add_text_handler(update: Update, context: ContextTypes.DEFAULT_T
         return
 
     if state == "add_genre":
-        from database import normalize_genres
-        movie_data[user_id]["genre"] = normalize_genres(text)
+        movie_data[user_id]["genre"] = text
         user_states[user_id] = "add_language"
         await update.message.reply_text("🗣 Tilini yuboring:")
         return
