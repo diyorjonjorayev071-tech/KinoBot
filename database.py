@@ -306,6 +306,12 @@ def sync_sqlite_movies_to_postgres() -> int:
     with psycopg.connect(DATABASE_URL) as pg_conn:
         with pg_conn.cursor() as pg_cursor:
             for row in movie_rows:
+                normalized_row = (
+                    *row[:12],
+                    bool(row[12]),
+                    row[13],
+                )
+
                 pg_cursor.execute(
                     """
                     INSERT INTO movies(
@@ -329,7 +335,7 @@ def sync_sqlite_movies_to_postgres() -> int:
                         is_recommended=EXCLUDED.is_recommended,
                         description=EXCLUDED.description
                     """,
-                    row,
+                    normalized_row,
                 )
 
             for row in quality_rows:
