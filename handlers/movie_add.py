@@ -31,7 +31,8 @@ async def _continue_after_poster(user_id: int, message):
             "\U0001F4E2 <b>Kanal uchun promo yuboring</b>\n\n"
             "\U0001F3AC Qisqa promo video yoki \U0001F5BC rasm yuboring.\n\n"
             "\u26A0\uFE0F <b>Bu yerda to\u2018liq kinoni yubormang.</b>\n"
-            "Keyingi bosqichda to\u2018liq kino alohida so\u2018raladi.",
+            "Keyingi bosqichda to\u2018liq kino alohida so\u2018raladi.\n\n"
+            "Promo kerak bo'lmasa: <code>skip</code>",
             parse_mode="HTML",
         )
         return
@@ -156,6 +157,17 @@ async def movie_add_text_handler(update: Update, context: ContextTypes.DEFAULT_T
         await _continue_after_poster(user_id, update.message)
         return
 
+    if state == "add_promo" and text.lower() == "skip":
+        movie_data.setdefault(user_id, {})["promo_media_type"] = ""
+        movie_data[user_id]["promo_file_id"] = ""
+        user_states[user_id] = "add_quality_name"
+
+        await update.message.reply_text(
+            "\u2705 Promo o'tkazib yuborildi."
+        )
+        await _ask_quality_name(update.message)
+        return
+
     if state == "add_quality_name":
         try:
             quality = normalize_quality(text)
@@ -270,7 +282,7 @@ async def movie_add_video_handler(update: Update, context: ContextTypes.DEFAULT_
     # CHANNEL_POST_V2
     # Kanalga faqat PROMO media yuboriladi.
     # To'liq kino videosi kanalga yuborilmaydi.
-    if str(data.get("content_type", "")).strip().lower() == "kino":
+    if str(data.get("content_type", "")).strip().lower() == "kino" and data.get("promo_file_id"):
         try:
             bot_username = "xDKinoCodeBot"
 
