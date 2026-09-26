@@ -12,6 +12,7 @@ admin_keyboard = ReplyKeyboardMarkup(
         [KeyboardButton("➕ Kino qo'shish")],
         [KeyboardButton("✏️ Kino tahrirlash"), KeyboardButton("🗑 Kino o'chirish")],
         [KeyboardButton("📊 Statistika"), KeyboardButton("📢 Reklama yuborish")],
+        [KeyboardButton("\U0001F4E4 Kanalga promo")],
         [KeyboardButton("⚙️ Sozlamalar")],
     ],
     resize_keyboard=True,

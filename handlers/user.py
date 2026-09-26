@@ -33,28 +33,110 @@ async def check_subscription(bot, user_id: int) -> bool:
         return False
 
 
+def _movie_request_from_start_args(
+    args,
+) -> tuple[str, int | None, int | None] | None:
+    if not args:
+        return None
+
+    payload = str(args[0]).strip()
+
+    if payload == "premium":
+        return "premium", None, None
+
+    if not payload.startswith("movie_"):
+        return None
+
+    value = payload[len("movie_"):]
+
+    if "_q_" in value:
+        code_text, quality_text = value.split("_q_", 1)
+        if not code_text.isdigit() or not quality_text.isdigit():
+            return None
+        return "quality_id", int(code_text), int(quality_text)
+
+    if "_s_" in value:
+        code_text, index_text = value.split("_s_", 1)
+        if not code_text.isdigit() or not index_text.isdigit():
+            return None
+        return "quality_index", int(code_text), int(index_text)
+
+    if not value.isdigit():
+        return None
+
+    return "movie", int(value), None
+
+
+# FINAL_START_PAYLOAD_V1
+
+
+
+# QUALITY_INDEX_DEEPLINK_V1
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
+    message = update.effective_message
     add_user(user.id)
 
     if not await check_subscription(context.bot, user.id):
-        await update.message.reply_text(
+        await message.reply_text(
             "❌ Botdan foydalanish uchun avval kanalga a'zo bo'ling.",
             reply_markup=subscribe_keyboard,
         )
         return
 
+    request = _movie_request_from_start_args(context.args)
+
+    if request is not None:
+        request_type, movie_code, option_value = request
+
+        if request_type == "premium":
+            await message.reply_text(
+                "💎 <b>xD KINO PLUS</b>\n\n"
+                "Hozircha haqiqiy to‘lov tizimi ulanmagan. "
+                "Tarif ishga tushirilganda shu bot orqali rasmiy ma’lumot beriladi.",
+                parse_mode="HTML",
+            )
+            return
+
+        if request_type == "quality_id":
+            await send_movie_quality(
+                update,
+                context,
+                int(movie_code),
+                int(option_value),
+            )
+            return
+
+        if request_type == "quality_index":
+            await send_movie_quality_index(
+                update,
+                context,
+                int(movie_code),
+                int(option_value),
+            )
+            return
+
+        if request_type == "movie":
+            await send_movie(update, context, int(movie_code))
+            return
+
     if user.id == ADMIN_ID:
-        await update.message.reply_text(
+        await message.reply_text(
             "👋 Xush kelibsiz, Admin!",
             reply_markup=admin_keyboard,
         )
         return
 
-    await update.message.reply_text(
+    await message.reply_text(
         "🎬 xD KINO BOT ga xush kelibsiz!\n\nKino kodini yuboring.",
         reply_markup=user_keyboard,
     )
+
+
+# FINAL_START_HANDLER_V1
+
 
 
 async def check_sub(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -137,6 +219,90 @@ def movie_choice_keyboard(code: int, user_id: int) -> InlineKeyboardMarkup:
     buttons.append([InlineKeyboardButton(fav_text, callback_data=f"fav:{code}")])
     buttons.append([InlineKeyboardButton("📢 Kanal", url=CHANNEL_LINK)])
     return InlineKeyboardMarkup(buttons)
+
+
+# QUALITY_INDEX_DIRECT_SEND_V1
+async def send_movie_quality_index(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    code: int,
+    quality_index: int,
+):
+    movie = get_movie(code)
+    message = update.effective_message
+
+    if not movie:
+        await message.reply_text("❌ Bunday kodli kino topilmadi.")
+        return
+
+    quality_rows = get_movie_quality_rows(code)
+    if not quality_rows and movie[8]:
+        add_movie_quality(code, "Original", movie[8])
+        quality_rows = get_movie_quality_rows(code)
+
+    if not quality_rows:
+        await message.reply_text("❌ Bu kino uchun video topilmadi.")
+        return
+
+    safe_index = max(0, min(int(quality_index), len(quality_rows) - 1))
+    quality_id, _quality = quality_rows[safe_index]
+    await send_movie_quality(update, context, code, quality_id)
+
+
+# FINAL_DIRECT_QUALITY_INDEX_V1
+
+
+
+# QUALITY_DIRECT_SEND_V1
+async def send_movie_quality(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    code: int,
+    quality_id: int,
+):
+    movie = get_movie(code)
+    message = update.effective_message
+
+    if not movie:
+        await message.reply_text("❌ Bunday kodli kino topilmadi.")
+        return
+
+    quality_row = get_movie_quality_by_id(code, quality_id)
+
+    if not quality_row:
+        quality_rows = get_movie_quality_rows(code)
+        if not quality_rows and movie[8]:
+            add_movie_quality(code, "Original", movie[8])
+            quality_rows = get_movie_quality_rows(code)
+
+        if not quality_rows:
+            await message.reply_text("❌ Bu kino uchun video topilmadi.")
+            return
+
+        fallback_id, _fallback_quality = quality_rows[0]
+        quality_row = get_movie_quality_by_id(code, fallback_id)
+
+    if not quality_row:
+        await message.reply_text("❌ Video fayli topilmadi.")
+        return
+
+    quality, file_id = quality_row
+    increase_views(code)
+    new_views = int(movie[9]) + 1
+    me = await context.bot.get_me()
+    caption = _movie_caption(movie, me.username, views=new_views)
+    caption = f"🎞 Sifat: <b>{escape(str(quality))}</b>\n\n" + caption
+
+    await context.bot.send_video(
+        chat_id=update.effective_chat.id,
+        video=file_id,
+        caption=caption,
+        parse_mode="HTML",
+    )
+
+
+# FINAL_DIRECT_QUALITY_V1
+
 
 
 async def send_movie(update: Update, context: ContextTypes.DEFAULT_TYPE, code: int):

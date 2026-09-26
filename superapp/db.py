@@ -2,12 +2,41 @@ from __future__ import annotations
 
 import logging
 import sqlite3
+import re
 from pathlib import Path
 from typing import Any
 
 from .settings import DATABASE_URL, SEED_DB_PATH
 
 logger = logging.getLogger(__name__)
+
+
+def normalize_genres(value: str) -> str:
+    raw = " ".join(str(value or "").strip().split())
+    aliases = {
+        "sarguzash": "Sarguzasht", "sarguzasht": "Sarguzasht", "adventure": "Sarguzasht",
+        "drama melodrama": "Drama", "drama-melodrama": "Drama", "melodrama": "Drama", "drama": "Drama",
+        "qo'rqinchli": "Qo‘rqinchli", "qo‘rqinchli": "Qo‘rqinchli", "qo`rqinchli": "Qo‘rqinchli",
+        "qo'rqinch": "Qo‘rqinchli", "qo‘rqinch": "Qo‘rqinchli", "ujas": "Qo‘rqinchli",
+        "dahshat": "Qo‘rqinchli", "horror": "Qo‘rqinchli",
+        "jangari": "Jangari", "komediya": "Komediya", "detektiv": "Detektiv",
+        "fantastik": "Fantastika", "fantastika": "Fantastika", "triller": "Triller", "tarixiy": "Tarixiy",
+        "oilaviy": "Oilaviy", "romantik": "Romantik",
+    }
+    if not raw:
+        return ""
+    if raw.casefold() in aliases:
+        return aliases[raw.casefold()]
+    result, seen = [], set()
+    for part in re.split(r"\s*[,/;|]+\s*", raw):
+        cleaned = " ".join(part.strip().split())
+        if not cleaned:
+            continue
+        canonical = aliases.get(cleaned.casefold(), cleaned[:1].upper() + cleaned[1:])
+        if canonical.casefold() not in seen:
+            seen.add(canonical.casefold())
+            result.append(canonical)
+    return ", ".join(result)
 
 
 class DatabaseNotConfigured(RuntimeError):
@@ -70,7 +99,10 @@ class Database:
                 imdb TEXT NOT NULL DEFAULT '',
                 poster_file_id TEXT NOT NULL DEFAULT '',
                 views INTEGER NOT NULL DEFAULT 0,
-                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                content_type TEXT NOT NULL DEFAULT 'Kino',
+                is_recommended BOOLEAN NOT NULL DEFAULT FALSE,
+                description TEXT NOT NULL DEFAULT ''
             )
             """,
             """
@@ -111,6 +143,11 @@ class Database:
                 opened_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
             """,
+            "ALTER TABLE movies ADD COLUMN IF NOT EXISTS content_type TEXT NOT NULL DEFAULT 'Kino'",
+            "ALTER TABLE movies ADD COLUMN IF NOT EXISTS is_recommended BOOLEAN NOT NULL DEFAULT FALSE",
+            "ALTER TABLE movies ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT ''",
+            "CREATE INDEX IF NOT EXISTS idx_movies_content_type ON movies(content_type)",
+            "CREATE INDEX IF NOT EXISTS idx_movies_recommended ON movies(is_recommended)",
             "CREATE INDEX IF NOT EXISTS idx_movies_name_lower ON movies(LOWER(name))",
             "CREATE INDEX IF NOT EXISTS idx_movies_genre_lower ON movies(LOWER(genre))",
             "CREATE INDEX IF NOT EXISTS idx_movies_views ON movies(views DESC)",
@@ -120,6 +157,15 @@ class Database:
             with conn.cursor() as cur:
                 for statement in statements:
                     cur.execute(statement)
+            conn.commit()
+
+        with pool.connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT code, genre FROM movies")
+                for row in cur.fetchall():
+                    clean = normalize_genres(row["genre"])
+                    if clean != str(row["genre"] or ""):
+                        cur.execute("UPDATE movies SET genre=%s WHERE code=%s", (clean, row["code"]))
             conn.commit()
 
     def _seed_from_sqlite(self, path: Path) -> None:
@@ -159,10 +205,11 @@ class Database:
                             """
                             INSERT INTO movies(
                                 code, name, year, country, genre, language,
-                                imdb, poster_file_id, views, created_at
+                                imdb, poster_file_id, views, created_at,
+                                content_type, is_recommended, description
                             ) VALUES(
                                 %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                                COALESCE(NULLIF(%s, '')::timestamptz, NOW())
+                                COALESCE(NULLIF(%s, '')::timestamptz, NOW()), %s, %s, %s
                             )
                             ON CONFLICT(code) DO UPDATE SET
                                 name=EXCLUDED.name,
@@ -172,7 +219,10 @@ class Database:
                                 language=EXCLUDED.language,
                                 imdb=EXCLUDED.imdb,
                                 poster_file_id=EXCLUDED.poster_file_id,
-                                views=GREATEST(movies.views, EXCLUDED.views)
+                                views=GREATEST(movies.views, EXCLUDED.views),
+                                content_type=EXCLUDED.content_type,
+                                is_recommended=EXCLUDED.is_recommended,
+                                description=EXCLUDED.description
                             """,
                             (
                                 int(row["code"]),
@@ -185,6 +235,9 @@ class Database:
                                 str(row["poster_file_id"] or "") if "poster_file_id" in keys else "",
                                 int(row["views"] or 0) if "views" in keys else 0,
                                 str(row["created_at"] or "") if "created_at" in keys else "",
+                                str(row["content_type"] or "Kino") if "content_type" in keys else "Kino",
+                                bool(row["is_recommended"]) if "is_recommended" in keys else False,
+                                str(row["description"] or "") if "description" in keys else "",
                             ),
                         )
 
@@ -231,41 +284,40 @@ class Database:
             return {"database": "ok", "movies": int(cur.fetchone()["count"])}
 
     def home(self, limit: int = 12) -> dict[str, Any]:
-        featured = self.list_movies(limit=6, sort="popular")["items"]
+        featured = self.list_movies(limit=6, recommended=True, sort="new")["items"]
+        if not featured:
+            featured = self.list_movies(limit=6, sort="popular")["items"]
+        # RECOMMENDATION_HERO_ONLY_V3
         popular = self.list_movies(limit=limit, sort="popular")["items"]
         new_items = self.list_movies(limit=limit, sort="new")["items"]
 
         section_specs = [
             ("new", "✨ Yangi qo‘shilganlar", {"sort": "new"}),
+            ("movies", "🎬 Kinolar", {"content_type": "Kino", "sort": "new"}),
+            ("series", "📺 Seriallar", {"content_type": "Serial", "sort": "new"}),
+            ("cartoons", "🧸 Multfilmlar", {"content_type": "Multfilm", "sort": "new"}),
             ("popular", "🔥 Ommabop", {"sort": "popular"}),
-            ("usa", "🇺🇸 AQSH kinolari", {"country": "AQSH", "sort": "popular"}),
-            ("india", "🇮🇳 Hind kinolari", {"country": "Hind", "sort": "popular"}),
-            ("korea", "🇰🇷 Koreya kinolari", {"country": "Koreya", "sort": "popular"}),
-            ("turkey", "🇹🇷 Turk kinolari", {"country": "Turkiya", "sort": "popular"}),
-            ("horror", "👻 Qo‘rqinchli", {"genre": "Qo‘rqinchli", "sort": "popular"}),
-            ("action", "💥 Jangari", {"genre": "Jangari", "sort": "popular"}),
-            ("adventure", "🧭 Sarguzasht", {"genre": "Sarguzasht", "sort": "popular"}),
         ]
-        sections: list[dict[str, Any]] = []
+        for item in self.genres():
+            genre = item["genre"]
+            section_specs.append((f"genre-{genre.lower()}", f"🎭 {genre}", {"genre": genre, "sort": "new"}))
+
+        sections = []
+        seen = set()
         for key, title, filters in section_specs:
+            signature = tuple(sorted(filters.items()))
+            if signature in seen:
+                continue
+            seen.add(signature)
             result = self.list_movies(limit=limit, **filters)
             if result["items"]:
-                sections.append(
-                    {
-                        "key": key,
-                        "title": title,
-                        "items": result["items"],
-                        "total": result["total"],
-                        "filters": filters,
-                    }
-                )
+                sections.append({"key": key, "title": title, "items": result["items"], "total": result["total"], "filters": filters})
 
         return {
             "featured": featured,
             "stories": (new_items + popular)[:10],
-            "genres": self.genres()[:12],
+            "genres": self.genres()[:14],
             "sections": sections,
-            # v1 frontend bilan orqaga moslik.
             "popular": popular,
             "new": new_items,
         }
@@ -277,6 +329,8 @@ class Database:
         genre: str = "",
         country: str = "",
         year: str = "",
+        content_type: str = "",
+        recommended: bool = False,
         sort: str = "popular",
         page: int = 1,
         limit: int = 24,
@@ -296,6 +350,11 @@ class Database:
         if year:
             where.append("year = %s")
             params.append(year)
+        if content_type:
+            where.append("content_type = %s")
+            params.append(content_type)
+        if recommended:
+            where.append("is_recommended = TRUE")
 
         where_sql = " WHERE " + " AND ".join(where) if where else ""
         order_sql = {
@@ -312,7 +371,8 @@ class Database:
             cur.execute(
                 f"""
                 SELECT code, name, year, country, genre, language, imdb,
-                       views, (poster_file_id <> '') AS has_poster
+                       views, content_type, is_recommended,
+                       (poster_file_id <> '') AS has_poster
                 FROM movies
                 {where_sql}
                 ORDER BY {order_sql}
@@ -329,7 +389,8 @@ class Database:
             cur.execute(
                 """
                 SELECT code, name, year, country, genre, language, imdb,
-                       views, (poster_file_id <> '') AS has_poster
+                       views, content_type, is_recommended, description,
+                       (poster_file_id <> '') AS has_poster
                 FROM movies WHERE code=%s
                 """,
                 (code,),
@@ -339,11 +400,36 @@ class Database:
                 return None
             movie = dict(row)
             cur.execute(
-                "SELECT quality FROM movie_qualities WHERE movie_code=%s ORDER BY id",
+                """
+                SELECT id, quality
+                FROM movie_qualities
+                WHERE movie_code=%s
+                ORDER BY
+                    CASE quality
+                        WHEN '360p' THEN 1
+                        WHEN '480p' THEN 2
+                        WHEN '720p' THEN 3
+                        WHEN '1080p' THEN 4
+                        WHEN 'Original' THEN 5
+                        ELSE 6
+                    END,
+                    quality
+                """,
                 (code,),
             )
-            movie["qualities"] = [item["quality"] for item in cur.fetchall()]
+            rows = [dict(item) for item in cur.fetchall()]
+            movie["qualities"] = [item["quality"] for item in rows]
+            movie["quality_options"] = [
+                {"id": int(item["id"]), "quality": item["quality"]}
+                for item in rows
+            ]
             return movie
+
+        # QUALITY_ORDER_STABLE_V2
+
+
+    # FINAL_QUALITY_OPTIONS_V1
+
 
     def poster_file_id(self, code: int) -> str:
         pool = self._require_pool()
@@ -362,7 +448,7 @@ class Database:
         for row in rows:
             raw = str(row["genre"] or "")
             for part in raw.replace("/", ",").split(","):
-                genre = part.strip()
+                genre = normalize_genres(part)
                 if genre:
                     counts[genre] = counts.get(genre, 0) + 1
         return [
@@ -371,6 +457,31 @@ class Database:
                 counts.items(), key=lambda item: (-item[1], item[0].lower())
             )
         ]
+
+    def filter_options(self) -> dict[str, list[str]]:
+        pool = self._require_pool()
+        with pool.connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT DISTINCT TRIM(country) AS country
+                FROM movies
+                WHERE TRIM(country) <> ''
+                ORDER BY country
+                """
+            )
+            countries = [str(row["country"]) for row in cur.fetchall()]
+            cur.execute(
+                """
+                SELECT DISTINCT TRIM(year) AS year
+                FROM movies
+                WHERE TRIM(year) <> ''
+                ORDER BY year DESC
+                """
+            )
+            years = [str(row["year"]) for row in cur.fetchall()]
+        return {"countries": countries, "years": years}
+
+    # FINAL_FILTER_OPTIONS_V1
 
     def upsert_user(self, user) -> dict[str, Any]:
         pool = self._require_pool()
@@ -456,8 +567,23 @@ class Database:
                 "INSERT INTO watch_history(user_id, movie_code) VALUES(%s, %s)",
                 (user_id, movie_code),
             )
-            cur.execute("UPDATE movies SET views=views+1 WHERE code=%s", (movie_code,))
             conn.commit()
+
+    # FINAL_HISTORY_RECORD_V1
+
+
+    def clear_history(self, user_id: int) -> int:
+        pool = self._require_pool()
+        with pool.connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM watch_history WHERE user_id=%s",
+                (user_id,),
+            )
+            deleted = int(cur.rowcount or 0)
+            conn.commit()
+            return deleted
+
+    # FINAL_CLEAR_HISTORY_V1
 
     def profile(self, user_id: int) -> dict[str, Any]:
         pool = self._require_pool()
@@ -507,4 +633,5 @@ class Database:
             rows = [dict(row) for row in cur.fetchall()]
         rows.sort(key=lambda item: item.get("opened_at"), reverse=True)
         return rows[:limit]
+
 

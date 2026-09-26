@@ -1,9 +1,10 @@
+import os
+
 # ===========================
 # Bot tokeni
 # ===========================
 
-TOKEN = "8908703408:AAFqvgRbRoRWa8btQA-GlXsdFx8LkwhlaQI"
-
+TOKEN = os.getenv("BOT_TOKEN", "").strip()
 # ===========================
 # Admin ID
 # ===========================

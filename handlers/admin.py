@@ -1,9 +1,9 @@
 from html import escape
 
-from telegram import Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-from config import ADMIN_ID
+from config import ADMIN_ID, CHANNEL_USERNAME
 from database import (
     add_movie_quality,
     delete_movie,
@@ -38,6 +38,39 @@ FIELD_LABELS = {
 def _clear_flow(user_id: int) -> None:
     user_states.pop(user_id, None)
     movie_data.pop(user_id, None)
+
+
+def _channel_promo_caption(code: int) -> str:
+    bot_username = "xDKinoCodeBot"
+
+    return (
+        "\U0001F3AC <b>xD KINO</b> \U0001F3AC \U0001F37F\n\n"
+        f"\U0001F39F\uFE0F Kino kodi: <code>{code}</code>\n\n"
+        "\U0001F53A Filmni hoziroq yuqori sifatda o\u2018zbek tilida tomosha qiling \U0001F4CC\n\n"
+        f"\U0001F916: @{bot_username}"
+    )
+
+
+def _channel_promo_keyboard(code: int) -> InlineKeyboardMarkup:
+    bot_username = "xDKinoCodeBot"
+    base_url = "https:" + "//t.me/" + bot_username
+
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "\U0001F37F TOMOSHA QILISH",
+                    url=f"{base_url}?start=movie_{code}",
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "\U0001F4F2 KINO ILOVA",
+                    url=f"{base_url}?startapp=movie_{code}",
+                )
+            ],
+        ]
+    )
 
 
 async def send_admin_edit_menu(message, code: int) -> None:
@@ -118,6 +151,70 @@ async def admin_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
             "⚙️ Sozlamalar\n\n"
             "• Kino tahrirlash orqali ma’lumot va sifatlarni boshqaring.\n"
             "• Treyler funksiyasi olib tashlangan.",
+            reply_markup=admin_keyboard,
+        )
+        return
+
+    if text == "\U0001F4E4 Kanalga promo":
+        _clear_flow(user_id)
+        user_states[user_id] = "channel_promo_video"
+
+        await update.message.reply_text(
+            "\U0001F4E4 <b>Kanal uchun qisqa promo videoni yuboring.</b>\n\n"
+            "\u26A0\uFE0F To\u2018liq kino emas, faqat qisqa promo video yuboring.\n\n"
+            "Bekor qilish: <code>bekor</code>",
+            parse_mode="HTML",
+        )
+        return
+
+    if state == "channel_promo_code":
+        if not text.isdigit():
+            await update.message.reply_text(
+                "\u274C Faqat kino kodini yuboring."
+            )
+            return
+
+        code = int(text)
+
+        if not movie_exists(code):
+            await update.message.reply_text(
+                "\u274C Bunday kodli kino topilmadi. Boshqa kod yuboring."
+            )
+            return
+
+        promo_file_id = movie_data.get(user_id, {}).get("promo_file_id")
+
+        if not promo_file_id:
+            _clear_flow(user_id)
+            await update.message.reply_text(
+                "\u274C Promo video topilmadi. Jarayonni qaytadan boshlang.",
+                reply_markup=admin_keyboard,
+            )
+            return
+
+        try:
+            await context.bot.send_video(
+                chat_id=CHANNEL_USERNAME,
+                video=promo_file_id,
+                caption=_channel_promo_caption(code),
+                parse_mode="HTML",
+                reply_markup=_channel_promo_keyboard(code),
+            )
+        except Exception as exc:
+            await update.message.reply_text(
+                "\u274C Kanalga promo yuborishda xato yuz berdi.\n\n"
+                f"<code>{escape(str(exc))}</code>\n\n"
+                "Video saqlanib turibdi. Kino kodini qayta yuboring.",
+                parse_mode="HTML",
+            )
+            return
+
+        _clear_flow(user_id)
+
+        await update.message.reply_text(
+            "\u2705 <b>Promo kanalga yuborildi!</b>\n\n"
+            f"\U0001F511 Kino kodi: <code>{code}</code>",
+            parse_mode="HTML",
             reply_markup=admin_keyboard,
         )
         return
@@ -460,6 +557,20 @@ async def admin_video_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
         return
 
     state = user_states.get(user_id, "")
+
+    if state == "channel_promo_video":
+        movie_data[user_id] = {
+            "promo_file_id": update.message.video.file_id,
+        }
+        user_states[user_id] = "channel_promo_code"
+
+        await update.message.reply_text(
+            "\u2705 Promo video qabul qilindi.\n\n"
+            "\U0001F511 Endi ushbu video tegishli bo\u2018lgan <b>kino kodini</b> yuboring:",
+            parse_mode="HTML",
+        )
+        return
+
     if not state.startswith("edit_quality_video:"):
         return
 

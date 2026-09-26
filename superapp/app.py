@@ -141,6 +141,8 @@ def movies(
     genre: str = Query(default="", max_length=100),
     country: str = Query(default="", max_length=100),
     year: str = Query(default="", max_length=10),
+    content_type: str = Query(default="", max_length=20),
+    recommended: bool = Query(default=False),
     sort: str = Query(default="popular", pattern="^(popular|new|name|year)$"),
     page: int = Query(default=1, ge=1, le=1000),
     limit: int = Query(default=24, ge=1, le=60),
@@ -151,6 +153,8 @@ def movies(
             genre=genre.strip(),
             country=country.strip(),
             year=year.strip(),
+            content_type=content_type.strip(),
+            recommended=recommended,
             sort=sort,
             page=page,
             limit=limit,
@@ -213,6 +217,24 @@ def record_history(body: HistoryBody, user: TelegramUser = Depends(verified_user
     db.record_open(user.id, body.movie_code)
     return {"ok": True}
 
+
+@app.get("/api/filter-options")
+def filter_options():
+    try:
+        return db.filter_options()
+    except DatabaseNotConfigured as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+# FINAL_FILTER_ROUTE_V1
+
+@app.delete("/api/history")
+def clear_history(user: TelegramUser = Depends(verified_user)):
+    deleted = db.clear_history(user.id)
+    return {"ok": True, "deleted": deleted}
+
+
+# FINAL_CLEAR_HISTORY_ROUTE_V1
 
 @app.get("/api/poster/{code}")
 async def poster(code: int):

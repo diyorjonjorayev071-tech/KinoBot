@@ -50,7 +50,9 @@ def validate_init_data(
 
     pairs = dict(parse_qsl(init_data, keep_blank_values=True, strict_parsing=False))
     received_hash = pairs.pop("hash", "")
-    pairs.pop("signature", None)
+    # Bot-token HMAC tekshiruvida faqat hash chiqariladi.
+    # Telegramning signature maydoni data-check-string ichida qoladi.
+    # TELEGRAM_SIGNATURE_HMAC_FIX_V1
     if not received_hash:
         raise TelegramAuthError("Telegram hash topilmadi.")
 
