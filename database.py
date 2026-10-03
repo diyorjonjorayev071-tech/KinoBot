@@ -77,6 +77,39 @@ def _require_shared_database() -> None:
         )
 
 
+
+# POSTGRES_RETRY_V1
+def _connect_postgres_with_retry(attempts: int = 8, delay: float = 3.0):
+    import time
+
+    if not DATABASE_URL:
+        raise RuntimeError("DATABASE_URL sozlanmagan.")
+    if psycopg is None:
+        raise RuntimeError("psycopg paketi o'rnatilmagan.")
+
+    last_error = None
+
+    for attempt in range(1, attempts + 1):
+        try:
+            return psycopg.connect(
+                DATABASE_URL,
+                connect_timeout=5,
+            )
+        except psycopg.OperationalError as exc:
+            last_error = exc
+
+            if attempt >= attempts:
+                raise
+
+            print(
+                f"PostgreSQL hali tayyor emas "
+                f"({attempt}/{attempts}), {delay} soniyadan keyin qayta uriniladi..."
+            )
+            time.sleep(delay)
+
+    raise last_error
+
+
 def _upsert_movie_postgres(
     *,
     code: int,
@@ -100,7 +133,7 @@ def _upsert_movie_postgres(
     if psycopg is None:
         raise RuntimeError("psycopg paketi o'rnatilmagan.")
 
-    with psycopg.connect(DATABASE_URL) as pg_conn:
+    with _connect_postgres_with_retry() as pg_conn:
         with pg_conn.cursor() as pg_cursor:
             pg_cursor.execute(
                 """
@@ -155,7 +188,7 @@ def _upsert_quality_postgres(
     if psycopg is None:
         raise RuntimeError("psycopg paketi o'rnatilmagan.")
 
-    with psycopg.connect(DATABASE_URL) as pg_conn:
+    with _connect_postgres_with_retry() as pg_conn:
         with pg_conn.cursor() as pg_cursor:
             pg_cursor.execute(
                 """
@@ -227,7 +260,7 @@ def _sync_movie_postgres_from_sqlite(movie_code: int) -> bool:
         content_type, is_recommended, description,
     ) = movie_row
 
-    with psycopg.connect(DATABASE_URL) as pg_conn:
+    with _connect_postgres_with_retry() as pg_conn:
         with pg_conn.cursor() as pg_cursor:
             pg_cursor.execute(
                 """
@@ -303,7 +336,7 @@ def sync_sqlite_movies_to_postgres() -> int:
             """
         ).fetchall()
 
-    with psycopg.connect(DATABASE_URL) as pg_conn:
+    with _connect_postgres_with_retry() as pg_conn:
         with pg_conn.cursor() as pg_cursor:
             for row in movie_rows:
                 normalized_row = (
@@ -792,7 +825,7 @@ def _delete_movie_postgres(code: int) -> None:
     if psycopg is None:
         raise RuntimeError("psycopg paketi o'rnatilmagan.")
 
-    with psycopg.connect(DATABASE_URL) as pg_conn:
+    with _connect_postgres_with_retry() as pg_conn:
         with pg_conn.cursor() as pg_cursor:
             pg_cursor.execute(
                 "DELETE FROM movies WHERE code=%s",
