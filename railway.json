@@ -1,10 +1,7 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
-  "build": {
-    "builder": "RAILPACK"
-  },
   "deploy": {
-    "startCommand": "uvicorn superapp.app:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips=*",
+    "healthcheckTimeout": 120,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
