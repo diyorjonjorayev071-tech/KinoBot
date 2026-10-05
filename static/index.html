@@ -2,113 +2,311 @@
 <html lang="uz">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="theme-color" content="#050805">
   <title>xD KINO</title>
-  <link rel="stylesheet" href="/static/app.css?v=clean1">
+
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <link rel="stylesheet" href="/static/app.css?v=final-v4">
 </head>
+
 <body>
-  <div id="splash" class="splash" aria-hidden="true">
-    <div class="poster-wall"></div>
-    <div class="film-strip film-strip-a"><span></span><span></span><span></span><span></span><span></span></div>
-    <div class="film-strip film-strip-b"><span></span><span></span><span></span><span></span></div>
 
-    <div class="reel reel-left">
-      <i></i><i></i><i></i><i></i><i></i>
-    </div>
-    <div class="reel reel-right">
-      <i></i><i></i><i></i><i></i><i></i>
+  <!-- CINEMATIC SPLASH -->
+  <div id="splash" class="splash">
+    <div class="splash-glow"></div>
+
+    <div class="film-reel" aria-hidden="true">
+      <span></span><span></span><span></span><span></span>
     </div>
 
-    <div class="clapper" aria-hidden="true"><b></b><em></em></div>
-    <div class="popcorn" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></div>
+    <div class="film-strip" aria-hidden="true">
+      <i></i><i></i><i></i><i></i><i></i><i></i>
+    </div>
 
-    <div class="splash-core">
-      <div class="xd-logo"><span class="play">▶</span><b>xD</b></div>
-      <div class="splash-title"><b>xD</b> KINO</div>
-      <div class="splash-sub">Sizning kino olamingiz</div>
-      <div class="loader"><i></i><i></i><i></i></div>
+    <div class="splash-center">
+      <div class="splash-icon">
+        <span class="play-triangle"></span>
+        <b>xD</b>
+      </div>
+
+      <div class="splash-title">
+        <strong>xD</strong> KINO
+      </div>
+
+      <div class="splash-subtitle">
+        Kinolar olamiga xush kelibsiz
+      </div>
+
+      <div class="loading-dots">
+        <i></i><i></i><i></i>
+      </div>
     </div>
   </div>
 
-  <div id="app" class="app-shell">
+
+  <!-- APP -->
+  <div id="app" class="app">
+
     <header class="topbar">
-      <button class="brand" data-screen="home" aria-label="Bosh sahifa"><span>xD</span> KINO</button>
+      <button class="logo-button" data-nav="home">
+        <span class="logo-play">?</span>
+        <span><b>xD</b>KINO</span>
+      </button>
+
       <div class="top-actions">
-        <button id="searchShortcut" class="icon-btn" aria-label="Qidiruv">⌕</button>
-        <div id="avatar" class="avatar">D</div>
+        <button class="icon-button" data-nav="search" aria-label="Qidiruv">
+          ?
+        </button>
+
+        <button class="avatar-button" data-nav="profile" aria-label="Profil">
+          <span id="avatarLetter">D</span>
+        </button>
       </div>
     </header>
 
-    <main>
-      <section id="homeScreen" class="screen active">
-        <div id="hero" class="hero skeleton"></div>
 
-        <section class="content-section recommendation-section">
-          <div class="section-head"><h2>Siz uchun tavsiyalar</h2><span>IMDb 7.5+</span></div>
-          <div id="storyStrip" class="story-strip"></div>
+    <main>
+
+      <!-- HOME -->
+      <section id="view-home" class="view active">
+
+        <section id="hero" class="hero">
+          <div id="heroBackdrop" class="hero-backdrop"></div>
+          <div class="hero-gradient"></div>
+
+          <div class="hero-content">
+            <div class="hero-badge">xD KINO ? TAVSIYA</div>
+
+            <h1 id="heroTitle">Kinolar olami</h1>
+
+            <div id="heroMeta" class="hero-meta">
+              Eng sara kinolar bir joyda
+            </div>
+
+            <p id="heroDescription" class="hero-description">
+              Sevimli kino, serial va multfilmlaringizni toping.
+            </p>
+
+            <div class="hero-actions">
+              <button id="heroWatch" class="btn btn-primary">
+                ? Tomosha qilish
+              </button>
+
+              <button id="heroDetails" class="btn btn-secondary">
+                ? Batafsil
+              </button>
+            </div>
+          </div>
         </section>
 
-        <section class="content-section genre-section">
-          <div class="section-head"><h2>Janrlar</h2></div>
+
+        <section class="content-section recommendation-section">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">SIZ UCHUN</div>
+              <h2>Tavsiyalar</h2>
+            </div>
+          </div>
+
+          <div id="recommendations" class="story-strip"></div>
+        </section>
+
+
+        <section class="content-section">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">KATEGORIYALAR</div>
+              <h2>Janrlar</h2>
+            </div>
+
+            <button class="text-button" data-nav="search">
+              Barchasi ?
+            </button>
+          </div>
+
           <div id="genreStrip" class="genre-strip"></div>
         </section>
 
+
         <div id="homeSections"></div>
+
+        <div class="bottom-space"></div>
       </section>
 
-      <section id="searchScreen" class="screen">
-        <div class="page-title"><h1>Qidiruv</h1><p>Kino, serial va multfilmni tez toping</p></div>
-        <div class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Kino nomini yozing..." autocomplete="off"></div>
-        <div class="filters">
-          <select id="typeFilter"><option value="">Barcha turlar</option></select>
-          <select id="genreFilter"><option value="">Barcha janrlar</option></select>
-          <select id="yearFilter"><option value="">Barcha yillar</option></select>
-          <select id="countryFilter"><option value="">Barcha davlatlar</option></select>
+
+      <!-- SEARCH -->
+      <section id="view-search" class="view page-view">
+
+        <div class="page-header">
+          <div class="section-kicker">KINO QIDIRUV</div>
+          <h1>Sevimli kinongizni toping</h1>
         </div>
-        <div id="searchStatus" class="muted-line"></div>
+
+        <div class="search-box">
+          <span>?</span>
+          <input
+            id="searchInput"
+            type="search"
+            placeholder="Kino, serial yoki multfilm..."
+            autocomplete="off"
+          >
+        </div>
+
+        <div class="filter-row">
+          <select id="typeSelect">
+            <option value="">Barchasi</option>
+            <option value="Kino">Kino</option>
+            <option value="Serial">Serial</option>
+            <option value="Multfilm">Multfilm</option>
+          </select>
+
+          <select id="sortSelect">
+            <option value="popular">Mashhur</option>
+            <option value="new">Yangi</option>
+            <option value="year">Yil</option>
+            <option value="name">Nomi</option>
+          </select>
+        </div>
+
+        <div id="searchCount" class="result-count">0 ta</div>
+
         <div id="searchGrid" class="movie-grid"></div>
+
+        <div class="bottom-space"></div>
       </section>
 
-      <section id="savedScreen" class="screen">
-        <div class="page-title"><h1>Saqlanganlar</h1><p>Sevimli kinolaringiz shu yerda</p></div>
-        <div id="savedGrid" class="movie-grid"></div>
+
+      <!-- FAVORITES -->
+      <section id="view-favorites" class="view page-view">
+
+        <div class="page-header">
+          <div class="section-kicker">MENING RO?YXATIM</div>
+          <h1>Sevimlilar</h1>
+        </div>
+
+        <div id="favoritesGrid" class="movie-grid"></div>
+
+        <div id="favoritesEmpty" class="empty-state hidden">
+          <div class="empty-icon">?</div>
+          <h3>Sevimlilar bo?sh</h3>
+          <p>Yoqtirgan kinolaringizni shu yerga saqlashingiz mumkin.</p>
+        </div>
+
+        <div class="bottom-space"></div>
       </section>
 
-      <section id="profileScreen" class="screen">
+
+      <!-- PROFILE -->
+      <section id="view-profile" class="view page-view">
+
         <div class="profile-card">
-          <div id="profileAvatar" class="profile-avatar">D</div>
-          <div><h1 id="profileName">xD KINO foydalanuvchisi</h1><p id="profileUser">Telegram Mini App</p></div>
+          <div class="profile-avatar">
+            <span id="profileAvatarLetter">D</span>
+          </div>
+
+          <h1 id="profileName">xD KINO</h1>
+          <div id="profileUsername" class="muted">@xDKinoCodeBot</div>
+
+          <div class="profile-stats">
+            <div>
+              <strong id="favoriteCount">0</strong>
+              <span>Sevimli</span>
+            </div>
+
+            <div>
+              <strong id="historyCount">0</strong>
+              <span>Ko?rilgan</span>
+            </div>
+
+            <div>
+              <strong>292+</strong>
+              <span>Kontent</span>
+            </div>
+          </div>
         </div>
-        <div class="stats">
-          <div><b id="favCount">0</b><span>Saqlangan</span></div>
-          <div><b id="historyCount">0</b><span>Ko‘rilgan</span></div>
-          <div><b>24/7</b><span>Kino olami</span></div>
+
+        <div class="info-card">
+          <div>
+            <small>ILOVA</small>
+            <strong>xD KINO</strong>
+          </div>
+          <span>clean-v1</span>
         </div>
-        <section class="content-section">
-          <div class="section-head"><h2>Oxirgi ko‘rilganlar</h2><button id="clearHistory" class="text-btn">Tozalash</button></div>
-          <div id="historyRow" class="movie-row"></div>
-        </section>
+
+        <div class="bottom-space"></div>
       </section>
+
     </main>
 
+
+    <!-- BOTTOM NAVIGATION -->
     <nav class="bottom-nav">
-      <button class="nav-btn active" data-screen="home"><span>⌂</span><small>Bosh sahifa</small></button>
-      <button class="nav-btn" data-screen="search"><span>⌕</span><small>Qidiruv</small></button>
-      <button class="nav-btn" data-screen="saved"><span>♡</span><small>Saqlangan</small></button>
-      <button class="nav-btn" data-screen="profile"><span>◉</span><small>Profil</small></button>
+
+      <button class="nav-item active" data-nav="home">
+        <span>?</span>
+        <small>Bosh sahifa</small>
+      </button>
+
+      <button class="nav-item" data-nav="search">
+        <span>?</span>
+        <small>Qidiruv</small>
+      </button>
+
+      <button class="nav-item" data-nav="favorites">
+        <span>?</span>
+        <small>Sevimli</small>
+      </button>
+
+      <button class="nav-item" data-nav="profile">
+        <span>?</span>
+        <small>Profil</small>
+      </button>
+
     </nav>
+
   </div>
 
-  <div id="detailOverlay" class="detail-overlay" aria-hidden="true">
-    <div class="detail-sheet">
-      <button id="detailClose" class="detail-close" aria-label="Yopish">×</button>
-      <div id="detailBody"></div>
+
+  <!-- DETAIL MODAL -->
+  <div id="movieModal" class="modal hidden">
+
+    <div class="modal-backdrop" data-close-modal></div>
+
+    <div class="modal-sheet">
+
+      <button class="modal-close" data-close-modal>?</button>
+
+      <div id="modalPoster" class="modal-poster"></div>
+
+      <div class="modal-content">
+        <div id="modalType" class="section-kicker">KINO</div>
+
+        <h2 id="modalTitle"></h2>
+
+        <div id="modalMeta" class="modal-meta"></div>
+
+        <p id="modalDescription" class="modal-description"></p>
+
+        <div class="modal-actions">
+          <button id="modalWatch" class="btn btn-primary">
+            ? Tomosha qilish
+          </button>
+
+          <button id="modalFavorite" class="btn btn-secondary">
+            ? Sevimli
+          </button>
+        </div>
+      </div>
+
     </div>
+
   </div>
+
 
   <div id="toast" class="toast"></div>
-  <script src="/static/app.js?v=clean1"></script>
+
+  <script src="/static/app.js?v=final-v4"></script>
 </body>
 </html>

@@ -1,93 +1,779 @@
-const $ = (s, root=document) => root.querySelector(s);
-const $$ = (s, root=document) => [...root.querySelectorAll(s)];
-const tg = window.Telegram?.WebApp;
-try { tg?.ready(); tg?.expand(); tg?.setHeaderColor?.('#050805'); tg?.setBackgroundColor?.('#050805'); } catch (_) {}
 
-const state = { home:null, config:null, current:null, screen:'home', searchTimer:null };
-const STORE_FAV='xd_kino_favorites_v1';
-const STORE_HISTORY='xd_kino_history_v1';
+const tg = window.Telegram?.WebApp || null;
 
-function loadStore(key){ try{return JSON.parse(localStorage.getItem(key)||'[]')}catch{return []} }
-function saveStore(key,val){ localStorage.setItem(key,JSON.stringify(val)); }
-function esc(v){ return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
-function num(v){ const m=String(v??'').match(/(?:10(?:\.0+)?|[0-9](?:\.\d+)?)/); return m?Number(m[0]):0; }
-function formatViews(v){ v=Number(v||0); if(v>=1e6)return (v/1e6).toFixed(v>=1e7?0:1)+'M'; if(v>=1e3)return (v/1e3).toFixed(v>=1e4?0:1)+'K'; return String(v); }
-async function api(url,opts){ const r=await fetch(url,opts); if(!r.ok){let d='';try{d=(await r.json()).detail||''}catch{} throw new Error(d||`HTTP ${r.status}`)} return r.json(); }
-function toast(msg){ const el=$('#toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove('show'),1700); }
+try {
+  tg?.ready();
+  tg?.expand();
+  tg?.setHeaderColor?.('#050705');
+  tg?.setBackgroundColor?.('#050705');
+  tg?.setBottomBarColor?.('#050705');
+} catch (_) {}
 
-function movieCard(item){
-  return `<article class="movie-card" data-movie="${Number(item.code)}">
-    <div class="movie-poster"><img src="${esc(item.poster_url)}" alt="${esc(item.name)}" loading="lazy"><span class="badge">${esc(item.content_type||'Kino')}</span>${item.imdb?`<span class="badge imdb-badge">★ ${esc(item.imdb)}</span>`:''}</div>
-    <div class="movie-name">${esc(item.name)}</div><div class="movie-sub">${esc(item.year||'')} ${item.views!=null?'• '+formatViews(item.views)+' ko‘rish':''}</div>
-  </article>`;
-}
-function storyCard(item){ return `<article class="story-item" data-movie="${Number(item.code)}"><div class="story-poster"><img src="${esc(item.poster_url)}" alt="${esc(item.name)}" loading="lazy"></div><div class="story-title">${esc(item.name)}</div><div class="story-imdb">★ IMDb ${esc(item.imdb||'—')}</div></article>`; }
 
-function renderHero(item){
-  const hero=$('#hero');
-  if(!item){hero.classList.remove('skeleton');hero.innerHTML='<div class="hero-content"><h1>xD KINO</h1><div class="hero-meta">Katalog hozircha bo‘sh</div></div>';return}
-  hero.classList.remove('skeleton'); hero.style.setProperty('--hero-img',`url("${item.poster_url}")`);
-  hero.innerHTML=`<div class="hero-content"><div class="hero-kicker">xD KINO tavsiya qiladi</div><h1>${esc(item.name)}</h1><div class="hero-meta"><span>${esc(item.year||'')}</span><span>${esc(item.content_type||'Kino')}</span><span>${esc(item.genre||'')}</span>${item.imdb?`<b>★ IMDb ${esc(item.imdb)}</b>`:''}</div><div class="hero-actions"><button class="primary-btn" data-movie="${Number(item.code)}">▶ Ko‘rish</button><button class="ghost-btn" data-movie="${Number(item.code)}">Batafsil</button></div></div>`;
-}
-function renderHome(data){
-  state.home=data; renderHero(data.featured?.[0]);
-  $('#storyStrip').innerHTML=(data.stories||[]).map(storyCard).join('')||'<div class="empty">IMDb 7.5+ tavsiyalar hali yo‘q.</div>';
-  $('#genreStrip').innerHTML=(data.genres||[]).map(g=>`<button class="genre-chip" data-genre="${esc(g)}">${esc(g)}</button>`).join('');
-  $('#homeSections').innerHTML=(data.sections||[]).filter(s=>s.items?.length).map(s=>`<section class="content-section"><div class="section-head"><h2>${esc(s.title)}</h2></div><div class="movie-row">${s.items.map(movieCard).join('')}</div></section>`).join('');
+const state = {
+  home: null,
+  hero: null,
+  selected: null,
+  favorites: new Set(),
+  searchTimer: null
+};
+
+
+const $ = (selector, root=document) => root.querySelector(selector);
+const $$ = (selector, root=document) => [...root.querySelectorAll(selector)];
+
+
+function escapeHtml(value='') {
+  return String(value)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#039;");
 }
 
-function fillSelect(id,items,label){ const el=$(id); el.innerHTML=`<option value="">${label}</option>`+(items||[]).map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join(''); }
-async function initFilters(){ try{const x=await api('/api/filter-options'); fillSelect('#typeFilter',x.types,'Barcha turlar');fillSelect('#genreFilter',x.genres,'Barcha janrlar');fillSelect('#yearFilter',x.years,'Barcha yillar');fillSelect('#countryFilter',x.countries,'Barcha davlatlar');}catch{} }
-async function runSearch(){
-  const p=new URLSearchParams(); const q=$('#searchInput').value.trim(); if(q)p.set('q',q);
-  [['#typeFilter','content_type'],['#genreFilter','genre'],['#yearFilter','year'],['#countryFilter','country']].forEach(([id,k])=>{const v=$(id).value;if(v)p.set(k,v)}); p.set('sort','popular');p.set('limit','60');
-  $('#searchStatus').textContent='Qidirilmoqda…';
-  try{const d=await api('/api/movies?'+p); $('#searchStatus').textContent=`${d.total} ta natija`; $('#searchGrid').innerHTML=d.items.length?d.items.map(movieCard).join(''):'<div class="empty">Hech narsa topilmadi.</div>';}
-  catch(e){$('#searchStatus').textContent='';$('#searchGrid').innerHTML=`<div class="error-box">${esc(e.message)}</div>`}
+
+function posterUrl(code) {
+  return `/api/poster/${encodeURIComponent(code)}`;
 }
 
-function favoriteItems(){ return loadStore(STORE_FAV); }
-function historyItems(){ return loadStore(STORE_HISTORY); }
-function isFavorite(code){ return favoriteItems().some(x=>Number(x.code)===Number(code)); }
-function toggleFavorite(item){ let list=favoriteItems(); const exists=list.some(x=>Number(x.code)===Number(item.code)); list=exists?list.filter(x=>Number(x.code)!==Number(item.code)):[item,...list].slice(0,80);saveStore(STORE_FAV,list);updateCounts();return !exists; }
-function addHistory(item){ let list=historyItems().filter(x=>Number(x.code)!==Number(item.code)); list.unshift(item); saveStore(STORE_HISTORY,list.slice(0,50)); updateCounts(); }
-function renderSaved(){ const list=favoriteItems(); $('#savedGrid').innerHTML=list.length?list.map(movieCard).join(''):'<div class="empty">Hali hech narsa saqlanmagan.</div>'; }
-function renderHistory(){ const list=historyItems(); $('#historyRow').innerHTML=list.length?list.map(movieCard).join(''):'<div class="empty">Tarix bo‘sh.</div>'; }
-function updateCounts(){ $('#favCount').textContent=favoriteItems().length; $('#historyCount').textContent=historyItems().length; }
 
-async function openMovie(code){
-  try{
-    const item=await api(`/api/movie/${code}`); state.current=item; addHistory(item); fetch(`/api/view/${code}`,{method:'POST'}).catch(()=>{});
-    const fav=isFavorite(code); const qualities=(item.qualities||[]).length?item.qualities:['Mavjud'];
-    $('#detailBody').innerHTML=`<div class="detail-hero" style="--detail-img:url('${esc(item.poster_url)}')"></div><div class="detail-content"><h2>${esc(item.name)}</h2><div class="detail-meta"><span>${esc(item.year||'—')}</span><span>${esc(item.country||'—')}</span><span>${esc(item.content_type||'Kino')}</span><span class="score">★ IMDb ${esc(item.imdb||'—')}</span><span>${formatViews(item.views)} ko‘rish</span></div><div class="description">${esc(item.description||'Ushbu kino uchun tavsif hali kiritilmagan.')}</div><div class="quality-row">${qualities.map(q=>`<span class="quality">${esc(q)}</span>`).join('')}</div><div class="detail-actions"><button id="watchNow" class="watch-btn">▶ Botda ko‘rish</button><button id="favNow" class="fav-btn ${fav?'on':''}" aria-label="Saqlash">${fav?'♥':'♡'}</button></div></div>`;
-    $('#detailOverlay').classList.add('open'); $('#detailOverlay').setAttribute('aria-hidden','false');
-    $('#favNow').onclick=()=>{const on=toggleFavorite(item);$('#favNow').classList.toggle('on',on);$('#favNow').textContent=on?'♥':'♡';toast(on?'Saqlandi':'Saqlanganlardan olib tashlandi');if(state.screen==='saved')renderSaved();};
-    $('#watchNow').onclick=()=>openBot(item.code);
-  }catch(e){ toast(e.message); }
-}
-function closeDetail(){ $('#detailOverlay').classList.remove('open');$('#detailOverlay').setAttribute('aria-hidden','true'); }
-function openBot(code){ const u=state.config?.bot_username||'xDKinoCodeBot';const p=state.config?.bot_start_prefix||'movie_';const url=`https://t.me/${encodeURIComponent(u)}?start=${encodeURIComponent(p+code)}`;try{if(tg?.openTelegramLink)tg.openTelegramLink(url);else location.href=url}catch{location.href=url} }
-
-function showScreen(name){
-  state.screen=name; $$('.screen').forEach(x=>x.classList.remove('active')); $(`#${name}Screen`)?.classList.add('active'); $$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.screen===name));
-  if(name==='search'){setTimeout(()=>$('#searchInput').focus(),80);if(!$('#searchGrid').children.length)runSearch()}
-  if(name==='saved')renderSaved(); if(name==='profile'){renderHistory();updateCounts()}
-  window.scrollTo({top:0,behavior:'smooth'});
+function imdbNumber(value) {
+  const match = String(value ?? '').replace(',', '.').match(/\d+(?:\.\d+)?/);
+  return match ? Number(match[0]) : 0;
 }
 
-function initProfile(){ const user=tg?.initDataUnsafe?.user; if(user){const name=[user.first_name,user.last_name].filter(Boolean).join(' ')||'Telegram foydalanuvchisi'; $('#profileName').textContent=name;$('#profileUser').textContent=user.username?'@'+user.username:'Telegram foydalanuvchisi'; const letter=(user.first_name||user.username||'D').slice(0,1).toUpperCase();$('#avatar').textContent=letter;$('#profileAvatar').textContent=letter;} }
 
-function bind(){
-  document.addEventListener('click',e=>{const m=e.target.closest('[data-movie]');if(m){openMovie(Number(m.dataset.movie));return}const g=e.target.closest('[data-genre]');if(g){showScreen('search');$('#genreFilter').value=g.dataset.genre;runSearch();return}const s=e.target.closest('[data-screen]');if(s){showScreen(s.dataset.screen);}});
-  $('#searchShortcut').onclick=()=>showScreen('search');$('#detailClose').onclick=closeDetail;$('#detailOverlay').addEventListener('click',e=>{if(e.target===$('#detailOverlay'))closeDetail()});
-  $('#searchInput').addEventListener('input',()=>{clearTimeout(state.searchTimer);state.searchTimer=setTimeout(runSearch,280)}); $$('.filters select').forEach(x=>x.addEventListener('change',runSearch));
-  $('#clearHistory').onclick=()=>{saveStore(STORE_HISTORY,[]);renderHistory();updateCounts();toast('Tarix tozalandi')};
+function viewsNumber(value) {
+  const n = Number(value || 0);
+  return Number.isFinite(n) ? n : 0;
 }
 
-async function boot(){
-  bind();initProfile();updateCounts();initFilters();
-  try{const [home,config]=await Promise.all([api('/api/home'),api('/api/config')]);state.config=config;renderHome(home);}catch(e){$('#homeScreen').innerHTML=`<div class="error-box"><b>Katalog yuklanmadi.</b><br>${esc(e.message)}</div>`}
-  setTimeout(()=>$('#splash').classList.add('done'),350);
+
+function itemsFrom(payload) {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload.items)) return payload.items;
+  return [];
 }
-window.addEventListener('load',boot);
-setTimeout(()=>$('#splash')?.classList.add('done'),5000);
+
+
+function uniqueMovies(items) {
+  const map = new Map();
+
+  for (const item of items || []) {
+    if (!item || item.code == null) continue;
+    if (!map.has(String(item.code))) {
+      map.set(String(item.code), item);
+    }
+  }
+
+  return [...map.values()];
+}
+
+
+async function api(path, options={}) {
+
+  const headers = {
+    ...(options.headers || {})
+  };
+
+  if (tg?.initData) {
+    headers['X-Telegram-Init-Data'] = tg.initData;
+  }
+
+  if (
+    options.body &&
+    typeof options.body === 'string' &&
+    !headers['Content-Type']
+  ) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  const response = await fetch(path, {
+    ...options,
+    headers
+  });
+
+  let data = null;
+
+  try {
+    data = await response.json();
+  } catch (_) {}
+
+  if (!response.ok) {
+    const message =
+      data?.detail ||
+      data?.message ||
+      `HTTP ${response.status}`;
+
+    throw new Error(message);
+  }
+
+  return data;
+}
+
+
+function toast(message) {
+  const el = $('#toast');
+
+  el.textContent = String(message || '');
+
+  el.classList.add('show');
+
+  clearTimeout(el._timer);
+
+  el._timer = setTimeout(() => {
+    el.classList.remove('show');
+  }, 2200);
+}
+
+
+function movieSubtitle(item) {
+
+  const values = [
+    item.year,
+    item.country
+  ].filter(Boolean);
+
+  return values.join(' ? ') || 'xD KINO';
+}
+
+
+function movieCard(item) {
+
+  const code = Number(item.code);
+
+  const type =
+    escapeHtml(item.content_type || item.type || 'Kino');
+
+  const imdb = imdbNumber(item.imdb);
+
+  return `
+    <article
+      class="movie-card"
+      data-code="${code}"
+    >
+      <div class="movie-poster">
+
+        <img
+          src="${posterUrl(code)}"
+          alt="${escapeHtml(item.name || 'Kino')}"
+          loading="lazy"
+          onerror="this.style.display='none'"
+        >
+
+        <div class="movie-type">${type}</div>
+
+        ${
+          imdb > 0
+            ? `<div class="movie-imdb">? ${imdb.toFixed(1)}</div>`
+            : ''
+        }
+
+      </div>
+
+      <div class="movie-name">
+        ${escapeHtml(item.name || `Kino ${code}`)}
+      </div>
+
+      <div class="movie-sub">
+        ${escapeHtml(movieSubtitle(item))}
+      </div>
+    </article>
+  `;
+}
+
+
+function storyCard(item) {
+
+  const code = Number(item.code);
+  const imdb = imdbNumber(item.imdb);
+
+  return `
+    <article
+      class="story-card"
+      data-code="${code}"
+    >
+
+      <div class="story-poster">
+
+        <img
+          src="${posterUrl(code)}"
+          alt="${escapeHtml(item.name || '')}"
+          loading="lazy"
+          onerror="this.style.display='none'"
+        >
+
+        ${
+          imdb
+            ? `<div class="story-score">? ${imdb.toFixed(1)}</div>`
+            : ''
+        }
+
+      </div>
+
+      <div class="story-title">
+        ${escapeHtml(item.name || `Kino ${code}`)}
+      </div>
+
+    </article>
+  `;
+}
+
+
+function bindMovieClicks(root=document) {
+
+  $$('[data-code]', root).forEach(card => {
+
+    card.onclick = () => {
+
+      const code = Number(card.dataset.code);
+
+      const all = collectHomeMovies();
+
+      const item =
+        all.find(x => Number(x.code) === code) ||
+        state.selected;
+
+      if (item) {
+        openMovie(item);
+      }
+
+    };
+
+  });
+}
+
+
+function collectHomeMovies() {
+
+  const home = state.home || {};
+
+  const items = [
+    ...(home.featured || []),
+    ...(home.stories || []),
+    ...(home.popular || []),
+    ...(home.new || [])
+  ];
+
+  for (const section of home.sections || []) {
+    items.push(...(section.items || []));
+  }
+
+  return uniqueMovies(items);
+}
+
+
+function setHero(item) {
+
+  if (!item) return;
+
+  state.hero = item;
+
+  const code = Number(item.code);
+
+  $('#heroBackdrop').style.backgroundImage =
+    `linear-gradient(to bottom,rgba(0,0,0,.03),rgba(0,0,0,.10)),url("${posterUrl(code)}")`;
+
+  $('#heroTitle').textContent =
+    item.name || 'xD KINO';
+
+  $('#heroMeta').textContent =
+    [
+      item.year,
+      item.country,
+      item.genre,
+      imdbNumber(item.imdb)
+        ? `IMDb ${imdbNumber(item.imdb).toFixed(1)}`
+        : ''
+    ]
+    .filter(Boolean)
+    .join(' ? ');
+
+  $('#heroDescription').textContent =
+    item.description ||
+    `${item.name || 'Ushbu kontent'}ni xD KINO orqali tomosha qiling.`;
+
+  $('#heroWatch').onclick = () => watchMovie(item);
+  $('#heroDetails').onclick = () => openMovie(item);
+}
+
+
+function watchMovie(item) {
+
+  if (!item?.code) return;
+
+  const link =
+    `https://t.me/xDKinoCodeBot?start=movie_${encodeURIComponent(item.code)}`;
+
+  try {
+    if (tg?.openTelegramLink) {
+      tg.openTelegramLink(link);
+      return;
+    }
+  } catch (_) {}
+
+  window.location.href = link;
+}
+
+
+function openMovie(item) {
+
+  state.selected = item;
+
+  const code = Number(item.code);
+
+  $('#modalPoster').style.backgroundImage =
+    `url("${posterUrl(code)}")`;
+
+  $('#modalType').textContent =
+    item.content_type || item.type || 'KINO';
+
+  $('#modalTitle').textContent =
+    item.name || `Kino ${code}`;
+
+  $('#modalMeta').textContent =
+    [
+      item.year,
+      item.country,
+      item.genre,
+      item.language,
+      imdbNumber(item.imdb)
+        ? `IMDb ${imdbNumber(item.imdb).toFixed(1)}`
+        : '',
+      viewsNumber(item.views)
+        ? `${viewsNumber(item.views)} ko?rish`
+        : ''
+    ]
+    .filter(Boolean)
+    .join(' ? ');
+
+  $('#modalDescription').textContent =
+    item.description ||
+    'Ushbu kontent xD KINO katalogida mavjud.';
+
+  $('#modalWatch').onclick = () => watchMovie(item);
+
+  $('#modalFavorite').onclick = () => toggleFavorite(item);
+
+  $('#movieModal').classList.remove('hidden');
+
+  document.body.style.overflow = 'hidden';
+}
+
+
+function closeMovie() {
+  $('#movieModal').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+
+async function toggleFavorite(item) {
+
+  try {
+
+    const enabled = !state.favorites.has(Number(item.code));
+
+    const data = await api('/api/favorites', {
+      method:'POST',
+      body:JSON.stringify({
+        movie_code:Number(item.code),
+        enabled
+      })
+    });
+
+    if (data.enabled ?? enabled) {
+      state.favorites.add(Number(item.code));
+      toast('Sevimlilarga qo?shildi');
+    } else {
+      state.favorites.delete(Number(item.code));
+      toast('Sevimlilardan olib tashlandi');
+    }
+
+  } catch (error) {
+    toast(
+      tg?.initData
+        ? error.message
+        : 'Sevimlilar Telegram ichida ishlaydi'
+    );
+  }
+}
+
+
+function renderRecommendations(items) {
+
+  const root = $('#recommendations');
+
+  root.innerHTML =
+    items.slice(0,12).map(storyCard).join('');
+
+  bindMovieClicks(root);
+}
+
+
+function renderGenres(genres) {
+
+  const clean = [...new Set(
+    (genres || [])
+      .flatMap(value =>
+        String(
+          typeof value === 'object'
+            ? value.name || value.genre || ''
+            : value
+        ).split(/[,;]+/)
+      )
+      .map(x => x.trim())
+      .filter(Boolean)
+  )].slice(0,16);
+
+  const root = $('#genreStrip');
+
+  root.innerHTML = clean.map(genre => `
+    <button
+      class="genre-card"
+      data-genre="${escapeHtml(genre)}"
+    >
+      <strong>${escapeHtml(genre)}</strong>
+      <span>Ko?rish ?</span>
+    </button>
+  `).join('');
+
+  $$('.genre-card',root).forEach(btn => {
+
+    btn.onclick = () => {
+
+      setView('search');
+
+      $('#searchInput').value = btn.dataset.genre;
+
+      searchMovies();
+
+    };
+
+  });
+}
+
+
+function renderSections(home) {
+
+  const root = $('#homeSections');
+
+  let sections = Array.isArray(home.sections)
+    ? home.sections
+    : [];
+
+  if (!sections.length) {
+
+    sections = [
+      {
+        title:'Mashhur',
+        items:home.popular || []
+      },
+      {
+        title:'Yangi qo?shilganlar',
+        items:home.new || []
+      }
+    ];
+
+  }
+
+  root.innerHTML = sections
+    .filter(section => section?.items?.length)
+    .map((section,index) => `
+
+      <section class="content-section">
+
+        <div class="section-head">
+
+          <div>
+            <div class="section-kicker">
+              ${index === 0 ? 'XUSUSIY TANLOV' : 'xD KINO'}
+            </div>
+
+            <h2>${escapeHtml(section.title || 'Kinolar')}</h2>
+          </div>
+
+        </div>
+
+        <div
+          class="movie-row"
+          data-section-index="${index}"
+        >
+          ${(section.items || [])
+            .slice(0,18)
+            .map(movieCard)
+            .join('')}
+        </div>
+
+      </section>
+    `)
+    .join('');
+
+  bindMovieClicks(root);
+}
+
+
+async function loadHome() {
+
+  try {
+
+    const [home, popularPayload] =
+      await Promise.all([
+        api('/api/home'),
+        api('/api/movies?sort=popular&limit=60')
+          .catch(() => ({items:[]}))
+      ]);
+
+    state.home = home || {};
+
+    const popular =
+      itemsFrom(popularPayload);
+
+    let recommendations =
+      popular
+        .filter(item => imdbNumber(item.imdb) >= 7.5)
+        .sort((a,b) =>
+          viewsNumber(b.views) - viewsNumber(a.views) ||
+          imdbNumber(b.imdb) - imdbNumber(a.imdb)
+        );
+
+    if (!recommendations.length) {
+      recommendations =
+        uniqueMovies([
+          ...(home?.stories || []),
+          ...(home?.popular || [])
+        ]);
+    }
+
+    const hero =
+      home?.featured?.[0] ||
+      recommendations[0] ||
+      home?.popular?.[0] ||
+      home?.new?.[0];
+
+    if (hero) {
+      setHero(hero);
+    }
+
+    renderRecommendations(recommendations);
+
+    renderGenres(home?.genres || []);
+
+    renderSections(home || {});
+
+  } catch (error) {
+
+    toast(`Yuklash xatosi: ${error.message}`);
+
+  } finally {
+
+    setTimeout(() => {
+      $('#splash').classList.add('done');
+    }, 650);
+
+  }
+}
+
+
+async function searchMovies() {
+
+  const q =
+    $('#searchInput').value.trim();
+
+  const type =
+    $('#typeSelect').value;
+
+  const sort =
+    $('#sortSelect').value;
+
+  const params =
+    new URLSearchParams({
+      q,
+      content_type:type,
+      sort,
+      limit:'60'
+    });
+
+  try {
+
+    const payload =
+      await api(`/api/movies?${params.toString()}`);
+
+    const items =
+      itemsFrom(payload);
+
+    $('#searchCount').textContent =
+      `${payload?.total ?? items.length} ta`;
+
+    $('#searchGrid').innerHTML =
+      items.map(movieCard).join('');
+
+    bindMovieClicks($('#searchGrid'));
+
+  } catch (error) {
+
+    $('#searchCount').textContent = '0 ta';
+
+    $('#searchGrid').innerHTML = '';
+
+    toast(error.message);
+
+  }
+}
+
+
+async function loadFavorites() {
+
+  try {
+
+    const payload =
+      await api('/api/favorites');
+
+    const items =
+      itemsFrom(payload);
+
+    state.favorites =
+      new Set(items.map(x => Number(x.code)));
+
+    $('#favoritesGrid').innerHTML =
+      items.map(movieCard).join('');
+
+    $('#favoritesEmpty')
+      .classList.toggle('hidden',items.length > 0);
+
+    bindMovieClicks($('#favoritesGrid'));
+
+  } catch (error) {
+
+    $('#favoritesGrid').innerHTML = '';
+
+    $('#favoritesEmpty')
+      .classList.remove('hidden');
+
+  }
+}
+
+
+async function loadProfile() {
+
+  const user =
+    tg?.initDataUnsafe?.user;
+
+  if (user) {
+
+    const name =
+      [user.first_name,user.last_name]
+        .filter(Boolean)
+        .join(' ') || 'xD KINO';
+
+    $('#profileName').textContent =
+      name;
+
+    $('#profileUsername').textContent =
+      user.username
+        ? `@${user.username}`
+        : 'Telegram foydalanuvchi';
+
+    const letter =
+      (user.first_name || 'D')
+        .trim()
+        .charAt(0)
+        .toUpperCase();
+
+    $('#avatarLetter').textContent = letter;
+    $('#profileAvatarLetter').textContent = letter;
+  }
+
+  try {
+
+    const profile =
+      await api('/api/profile');
+
+    $('#favoriteCount').textContent =
+      profile.favorites_count ?? 0;
+
+    $('#historyCount').textContent =
+      profile.history_count ?? 0;
+
+  } catch (_) {}
+
+}
+
+
+function setView(name) {
+
+  $$('.view').forEach(view => {
+    view.classList.remove('active');
+  });
+
+  $(`#view-${name}`)?.classList.add('active');
+
+  $$('.nav-item').forEach(btn => {
+    btn.classList.toggle(
+      'active',
+      btn.dataset.nav === name
+    );
+  });
+
+  window.scrollTo({
+    top:0,
+    behavior:'instant'
+  });
+
+  if (name === 'search') {
+    searchMovies();
+  }
+
+  if (name === 'favorites') {
+    loadFavorites();
+  }
+
+  if (name === 'profile') {
+    loadProfile();
+  }
+}
+
+
+$$('[data-nav]').forEach(btn => {
+  btn.addEventListener('click',() => {
+    setView(btn.dataset.nav);
+  });
+});
+
+
+$$('[data-close-modal]').forEach(el => {
+  el.addEventListener('click',closeMovie);
+});
+
+
+$('#searchInput').addEventListener('input',() => {
+
+  clearTimeout(state.searchTimer);
+
+  state.searchTimer =
+    setTimeout(searchMovies,320);
+
+});
+
+
+$('#typeSelect').addEventListener(
+  'change',
+  searchMovies
+);
+
+$('#sortSelect').addEventListener(
+  'change',
+  searchMovies
+);
+
+
+document.addEventListener('keydown',event => {
+  if (event.key === 'Escape') {
+    closeMovie();
+  }
+});
+
+
+loadProfile();
+loadHome();
