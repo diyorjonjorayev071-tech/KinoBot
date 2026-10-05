@@ -27,6 +27,25 @@ db = Database()
 poster_cache: dict[int, tuple[float, bytes, str]] = {}
 
 
+# FRONTEND_NO_CACHE_V5
+@app.middleware("http")
+async def frontend_no_cache(request, call_next):
+    response = await call_next(request)
+
+    if (
+        request.url.path in {"/", "/v5"}
+        or request.url.path.startswith("/static/")
+    ):
+        response.headers["Cache-Control"] = (
+            "no-store, no-cache, must-revalidate, max-age=0"
+        )
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+
+    return response
+
+
+
 @app.get("/health")
 def health() -> dict[str, Any]:
     try:
@@ -36,7 +55,7 @@ def health() -> dict[str, Any]:
     return {
         "status": "ok",
         "service": "xd-kino-clean",
-        "ui_version": "clean-v1",
+        "ui_version": "final-v5",
         **info,
     }
 
@@ -155,4 +174,21 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/")
 def index() -> FileResponse:
-    return FileResponse(STATIC_DIR / "index.html")
+    return FileResponse(
+        STATIC_DIR / "index.html",
+        headers={
+            "Cache-Control":
+            "no-store, no-cache, must-revalidate, max-age=0"
+        },
+    )
+
+
+@app.get("/v5")
+def index_v5() -> FileResponse:
+    return FileResponse(
+        STATIC_DIR / "index.html",
+        headers={
+            "Cache-Control":
+            "no-store, no-cache, must-revalidate, max-age=0"
+        },
+    )
