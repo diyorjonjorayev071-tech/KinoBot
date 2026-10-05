@@ -3,157 +3,110 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#060812">
+  <meta name="theme-color" content="#0d0f0d">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="xD KINO — Telegram ichidagi premium kino katalogi">
+  <meta name="description" content="xD KINO — Telegram ichidagi kino katalogi">
   <title>xD KINO</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="/static/app-v30.css?v=20260726-index-repair-v1">
+  <link rel="stylesheet" href="/static/app-v40.css?v=cinema-splash-v2">
 </head>
 <body>
   <div id="splash" class="splash" aria-label="Yuklanmoqda">
-    <div class="splash-orbit orbit-one"></div>
-    <div class="splash-orbit orbit-two"></div>
-    <div class="wordmark wordmark-large" aria-label="xD KINO">
-      <span class="wordmark-play">▶</span><strong>xD</strong><b>KINO</b>
-    </div>
-    <p>Kinolar olamiga xush kelibsiz</p>
-    <div class="splash-loader"><i></i><i></i><i></i></div>
+    <div class="splash-mark"><span class="splash-play">▶</span><span class="splash-d">D</span></div>
+    <div class="splash-brand"><strong>xD</strong><b>KINO</b></div>
+    <div class="splash-dots"><i></i><i></i><i></i></div>
   </div>
 
   <div id="app" class="app-shell">
-    <header class="topbar">
-      <button class="top-icon" type="button" data-nav="home" aria-label="Bosh sahifa">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
-      </button>
-      <button class="wordmark" type="button" data-nav="home" aria-label="xD KINO bosh sahifa">
-        <span class="wordmark-play">▶</span><strong>xD</strong><b>KINO</b>
-      </button>
-      <div class="topbar-actions">
-        <button id="topSearch" class="top-icon" type="button" aria-label="Qidiruv">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16.3 16.3 4.2 4.2"/></svg>
-        </button>
-        <button id="topAvatar" class="top-avatar" type="button" aria-label="Profil">D</button>
-      </div>
-    </header>
-
     <main>
       <section id="homeView" class="view active-view">
-        <section class="story-section" aria-label="Tezkor tavsiyalar">
-          <div id="storyStrip" class="story-strip"></div>
-        </section>
-
         <section id="heroCarousel" class="hero-carousel skeleton-block" aria-label="Tanlangan kinolar">
           <div id="heroBackdrop" class="hero-backdrop"></div>
-          <div class="hero-sheen"></div>
-          <div class="hero-vignette"></div>
-          <button id="heroPrev" class="hero-arrow hero-arrow-left" type="button" aria-label="Oldingi">‹</button>
-          <button id="heroNext" class="hero-arrow hero-arrow-right" type="button" aria-label="Keyingi">›</button>
-          <div class="hero-content">
-            <span class="hero-badge"><i></i> XUSUSIY TAVSIYA</span>
-            <h1 id="heroTitle">Kinolar olami</h1>
+          <div class="hero-shade"></div>
+
+          <header class="hero-header">
+            <button class="brand-lockup" type="button" data-nav="home" aria-label="xD KINO bosh sahifa">
+              <span class="brand-icon">▶</span><span><strong>xD</strong><b>KINO</b></span>
+            </button>
+            <button id="topSearch" class="round-icon" type="button" aria-label="Qidiruv">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16.3 16.3 4.2 4.2"/></svg>
+            </button>
+          </header>
+
+          <div class="hero-copy">
+            <h1 id="heroTitle">xD KINO</h1>
             <p id="heroMeta">Eng sara kinolar bir joyda</p>
-            <div class="hero-actions">
-              <button id="heroWatch" class="primary-button" type="button">
-                <span>▶</span> Tomosha qilish
-              </button>
-              <button id="heroInfo" class="glass-button" type="button">Batafsil</button>
-            </div>
+            <button id="heroWatch" class="watch-button" type="button"><span>▶</span> Ko‘rishni boshlash</button>
+            <button id="heroInfo" class="hero-info-link" type="button">Batafsil</button>
           </div>
+
+          <button id="heroPrev" class="hero-swipe hero-swipe-left" type="button" aria-label="Oldingi">‹</button>
+          <button id="heroNext" class="hero-swipe hero-swipe-right" type="button" aria-label="Keyingi">›</button>
           <div id="heroDots" class="hero-dots"></div>
         </section>
 
-        <section class="content-block genre-block">
-          <div class="section-heading">
-            <div><span class="section-kicker">KATEGORIYALAR</span><h2>Janrlar</h2></div>
-            <button id="allGenres" type="button">Barchasi <span>›</span></button>
-          </div>
+        <section class="home-section genre-block">
+          <div class="section-title-row"><h2>Janrlar</h2><button id="allGenres" type="button">Barchasi <span>›</span></button></div>
           <div id="genreStrip" class="genre-strip"></div>
         </section>
 
-        <div id="homeSections"></div>
+        <section class="home-section recommendation-strip">
+          <div class="section-title-row"><h2>Siz uchun tavsiyalar</h2><button id="homeSearchButton" type="button">Barchasi <span>›</span></button></div>
+          <div id="storyStrip" class="story-strip"></div>
+        </section>
+
+        <div id="homeSections" class="home-sections"></div>
       </section>
 
       <section id="searchView" class="view hidden">
-        <div class="page-heading">
-          <span class="page-kicker">KINO QIDIRUV</span>
-          <div class="page-title-row"><h1>Sevimli kinongizni toping</h1><span id="searchTotal" class="count-pill">0 ta</span></div>
-        </div>
-
+        <header class="page-topbar">
+          <button class="brand-lockup" type="button" data-nav="home"><span class="brand-icon">▶</span><span><strong>xD</strong><b>KINO</b></span></button>
+          <span id="searchTotal" class="tiny-count">0 ta</span>
+        </header>
+        <div class="page-heading"><h1>Qidiruv</h1><p>Kino nomi, kodi yoki janri bo‘yicha toping.</p></div>
         <div class="search-box">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16.3 16.3 4.2 4.2"/></svg>
           <input id="searchInput" type="search" autocomplete="off" inputmode="search" placeholder="Kino nomi yoki kodini kiriting">
           <button id="clearSearch" type="button" aria-label="Tozalash">×</button>
-          <span class="search-glow"></span>
         </div>
-
         <div id="searchChips" class="chips"></div>
-        <div class="advanced-filters" aria-label="Qidiruv filtrlari">
-          <select id="sortSelect" aria-label="Saralash">
-            <option value="popular">Ommabop</option>
-            <option value="new">Eng yangi</option>
-            <option value="name">Nomi bo‘yicha</option>
-            <option value="year">Yili bo‘yicha</option>
-          </select>
-          <select id="countrySelect" aria-label="Davlat">
-            <option value="">Barcha davlatlar</option>
-          </select>
-          <select id="yearSelect" aria-label="Yil">
-            <option value="">Barcha yillar</option>
-          </select>
+        <div class="advanced-filters">
+          <select id="sortSelect"><option value="popular">Ommabop</option><option value="new">Eng yangi</option><option value="name">Nomi bo‘yicha</option><option value="year">Yili bo‘yicha</option></select>
+          <select id="countrySelect"><option value="">Barcha davlatlar</option></select>
+          <select id="yearSelect"><option value="">Barcha yillar</option></select>
         </div>
-
-        <section class="content-block search-content">
-          <div class="section-heading">
-            <div><span class="section-kicker">NATIJALAR</span><h2 id="searchHeading">Tavsiyalar</h2></div>
-            <span id="searchCount"></span>
-          </div>
+        <section class="search-content">
+          <div class="section-title-row"><h2 id="searchHeading">Tavsiyalar</h2><span id="searchCount"></span></div>
           <div id="searchGrid" class="movie-grid"></div>
           <button id="loadMore" class="load-more hidden" type="button">Yana ko‘rsatish</button>
-          <div id="emptyState" class="empty-state hidden"><span>🎞️</span><h2>Kino topilmadi</h2><p>Boshqa nom, kod yoki janr bilan qidiring.</p></div>
+          <div id="emptyState" class="empty-state hidden"><span>🎞️</span><h2>Kino topilmadi</h2><p>Boshqa so‘z bilan qidiring.</p></div>
         </section>
       </section>
 
       <section id="profileView" class="view hidden">
-        <div class="page-heading profile-heading">
-          <span class="page-kicker">SHAXSIY KABINET</span>
-          <h1>Profil</h1>
-        </div>
-
-        <section class="profile-hero">
-          <div class="profile-aura"></div>
+        <header class="page-topbar">
+          <button class="brand-lockup" type="button" data-nav="home"><span class="brand-icon">▶</span><span><strong>xD</strong><b>KINO</b></span></button>
+          <button id="topAvatar" class="top-avatar" type="button" aria-label="Profil">D</button>
+        </header>
+        <div class="page-heading"><h1>Profil</h1><p>Shaxsiy kutubxonangiz va hisob ma’lumotlari.</p></div>
+        <section class="profile-card">
           <div id="profileAvatar" class="profile-avatar">D</div>
-          <div class="profile-main">
-            <h2 id="profileName">Telegram foydalanuvchisi</h2>
-            <p id="profileUsername">@username</p>
-          </div>
+          <div class="profile-main"><h2 id="profileName">Telegram foydalanuvchisi</h2><p id="profileUsername">@username</p></div>
           <span class="status-badge"><i></i> Faol</span>
         </section>
-
-        <section class="plan-card">
-          <div class="plan-icon">✦</div>
-          <div class="plan-copy">
-            <span>HOZIRGI TARIF</span>
-            <strong id="profilePlan">Bepul</strong>
-            <small>Profilingiz va sevimlilaringiz doim saqlanadi</small>
-          </div>
-          <button id="openPlans" type="button">Tariflar</button>
+        <section class="profile-stats">
+          <div><small>Telegram ID</small><strong id="profileId">—</strong></div>
+          <div><small>Balans</small><strong id="profileBalance">0 so‘m</strong></div>
+          <div><small>Tarif</small><strong id="profilePlan">Bepul</strong></div>
         </section>
-
-        <section class="profile-panel">
-          <div class="panel-heading"><h3>Hisob ma’lumotlari</h3><span>🔒 Xavfsiz</span></div>
-          <div class="info-row"><span class="info-icon">ID</span><div><small>Telegram ID</small><strong id="profileId">—</strong></div></div>
-          <div class="info-row"><span class="info-icon">SO‘M</span><div><small>Balans</small><strong id="profileBalance">0 so‘m</strong></div></div>
-        </section>
-
         <section class="profile-actions">
-          <button id="profileFavorites" class="profile-action" type="button"><span class="action-icon">♥</span><div><strong>Sevimlilar</strong><small id="favoritesCount">0 ta kino</small></div><b>›</b></button>
-          <button id="profileHistory" class="profile-action" type="button"><span class="action-icon">↻</span><div><strong>Tomosha tarixi</strong><small id="historyCount">0 ta yozuv</small></div><b>›</b></button>
-          <button id="openBot" class="profile-action" type="button"><span class="action-icon">✈</span><div><strong>Asosiy bot</strong><small>Kinoni Telegram’da tomosha qilish</small></div><b>›</b></button>
+          <button id="profileFavorites" class="profile-action" type="button"><span>♥</span><div><strong>Sevimlilar</strong><small id="favoritesCount">0 ta kino</small></div><b>›</b></button>
+          <button id="profileHistory" class="profile-action" type="button"><span>↻</span><div><strong>Tomosha tarixi</strong><small id="historyCount">0 ta yozuv</small></div><b>›</b></button>
+          <button id="openPlans" class="profile-action" type="button"><span>✦</span><div><strong>Tariflar</strong><small>Premium imkoniyatlar</small></div><b>›</b></button>
+          <button id="openBot" class="profile-action" type="button"><span>✈</span><div><strong>Asosiy bot</strong><small>Telegram botga qaytish</small></div><b>›</b></button>
         </section>
-
-        <section id="profileCollection" class="content-block hidden">
-          <div class="section-heading"><div><span class="section-kicker">KUTUBXONA</span><h2 id="collectionTitle">Sevimlilar</h2></div><button id="clearHistory" class="hidden danger-text" type="button">Tarixni tozalash</button><button id="closeCollection" type="button">Yopish</button></div>
+        <section id="profileCollection" class="collection-panel hidden">
+          <div class="section-title-row"><h2 id="collectionTitle">Sevimlilar</h2><div><button id="clearHistory" class="hidden danger-text" type="button">Tozalash</button><button id="closeCollection" type="button">Yopish</button></div></div>
           <div id="collectionGrid" class="movie-grid"></div>
           <div id="collectionEmpty" class="empty-state hidden"><span>♡</span><h2>Ro‘yxat bo‘sh</h2><p>Kinolarni saqlash uchun yurak belgisini bosing.</p></div>
         </section>
@@ -161,54 +114,43 @@
     </main>
 
     <nav class="bottom-nav" aria-label="Asosiy navigatsiya">
-      <button class="nav-item active" type="button" data-nav="home">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/></svg>
-        <small>Asosiy</small>
-      </button>
-      <button class="nav-item" type="button" data-nav="search">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16.3 16.3 4.2 4.2"/></svg>
-        <small>Qidiruv</small>
-      </button>
-      <button class="nav-item" type="button" data-nav="profile">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.7-4.1 3-6 7-6s6.3 1.9 7 6"/></svg>
-        <small>Profil</small>
-      </button>
+      <button class="nav-item active" type="button" data-nav="home"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/></svg><small>Asosiy</small></button>
+      <button class="nav-item" id="navCategories" type="button"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg><small>Kategoriyalar</small></button>
+      <button class="nav-item nav-center" type="button" data-nav="search"><span class="nav-center-orb"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16.3 16.3 4.2 4.2"/></svg></span><small>Qidiruv</small></button>
+      <button class="nav-item" id="navFavorites" type="button"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></svg><small>Sevimlilar</small></button>
+      <button class="nav-item" type="button" data-nav="profile"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.7-4.1 3-6 7-6s6.3 1.9 7 6"/></svg><small>Profil</small></button>
     </nav>
   </div>
 
   <div id="movieModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <button id="modalBackdrop" class="modal-backdrop" type="button" aria-label="Yopish"></button>
     <article class="movie-sheet">
-      <button id="modalClose" class="modal-close" type="button" aria-label="Yopish">×</button>
+      <button id="modalClose" class="modal-close" type="button">×</button>
       <div id="modalPoster" class="modal-poster"><div class="modal-gradient"></div></div>
       <div class="modal-body">
-        <div class="modal-title-row"><div><span id="modalCode" class="code-badge">#0000</span><h2 id="modalTitle">Kino</h2></div><button id="shareButton" class="share-button" type="button" aria-label="Ulashish">↗</button><button id="favoriteButton" class="favorite-button" type="button" aria-label="Sevimli">♡</button></div>
+        <div class="modal-title-row"><div><span id="modalCode" class="code-badge">#0000</span><h2 id="modalTitle">Kino</h2></div><div class="modal-actions"><button id="shareButton" type="button">↗</button><button id="favoriteButton" type="button">♡</button></div></div>
         <p id="modalMeta" class="modal-meta"></p>
         <p id="modalGenre" class="modal-genre"></p>
-        <p id="modalDescription" class="modal-genre" hidden></p>
-        <div class="quality-heading"><span>Mavjud sifatlar</span><small>Telegram orqali yuboriladi</small></div>
+        <p id="modalDescription" class="modal-description" hidden></p>
+        <div class="quality-heading"><span>Sifat</span><small>Telegram bot orqali ochiladi</small></div>
         <div id="qualityList" class="quality-list"></div>
-        <button id="modalWatch" class="primary-button wide" type="button"><span>▶</span> Botda tomosha</button>
+        <button id="modalWatch" class="watch-button wide" type="button"><span>▶</span> Ko‘rishni boshlash</button>
       </div>
     </article>
   </div>
 
-  <div id="planModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Obuna tariflari">
-    <button id="planBackdrop" class="modal-backdrop" type="button" aria-label="Yopish"></button>
+  <div id="planModal" class="modal hidden" role="dialog" aria-modal="true">
+    <button id="planBackdrop" class="modal-backdrop" type="button"></button>
     <article class="plan-sheet">
-      <button id="planClose" class="modal-close" type="button" aria-label="Yopish">×</button>
-      <div class="plan-sheet-head"><span class="plan-gem">✦</span><div><small>xD KINO PLUS</small><h2>Premium imkoniyatlar</h2></div></div>
-      <div class="benefit-list">
-        <div><span>✓</span><p><strong>Tezkor katalog</strong><small>Yangi kinolarni birinchi bo‘lib toping</small></p></div>
-        <div><span>✓</span><p><strong>Sevimlilar va tarix</strong><small>Shaxsiy ro‘yxatlaringiz saqlanadi</small></p></div>
-        <div><span>✓</span><p><strong>To‘g‘ridan-to‘g‘ri bot</strong><small>Bir bosishda kinoni oching</small></p></div>
-      </div>
-      <button id="planContact" class="primary-button wide" type="button">Tarif bo‘yicha bog‘lanish</button>
+      <button id="planClose" class="modal-close" type="button">×</button>
+      <div class="plan-head"><span>✦</span><div><small>xD KINO PLUS</small><h2>Premium imkoniyatlar</h2></div></div>
+      <div class="benefit-list"><div><b>✓</b><p><strong>Tezkor katalog</strong><small>Yangi kinolarni tez toping</small></p></div><div><b>✓</b><p><strong>Sevimlilar va tarix</strong><small>Shaxsiy ro‘yxatlar saqlanadi</small></p></div></div>
+      <button id="planContact" class="watch-button wide" type="button">Tarif bo‘yicha bog‘lanish</button>
       <p class="plan-note">To‘lov va tariflar asosiy bot orqali boshqariladi.</p>
     </article>
   </div>
 
   <div id="toast" class="toast hidden" role="status"></div>
-  <script src="/static/app-v30.js?v=20260726-index-repair-v1" defer></script>
+  <script src="/static/app-v40.js?v=20260929-v4-dodastyle" defer></script>
 </body>
 </html>
