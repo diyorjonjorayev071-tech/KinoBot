@@ -1,0 +1,6 @@
+﻿.venv/
+__pycache__/
+*.pyc
+.env
+xd_kino.db
+.DS_Store
