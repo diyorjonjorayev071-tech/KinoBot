@@ -11,41 +11,145 @@
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <link rel="stylesheet" href="/static/app.css?v=final-v12-ui">
+  <link rel="stylesheet" href="/static/app.css?v=final-v13-cinema">
 </head>
 
 <body>
 
   <!-- CINEMATIC SPLASH -->
-  <div id="splash" class="splash">
-    <div class="splash-glow"></div>
+  <div id="splash" class="splash cinema-splash">
 
-    <div class="film-reel" aria-hidden="true">
-      <span></span><span></span><span></span><span></span>
+    <div class="cinema-bg"></div>
+    <div class="cinema-vignette"></div>
+    <div class="cinema-noise"></div>
+
+    <!-- blurred poster wall -->
+    <div class="cinema-poster-wall" aria-hidden="true">
+      <div class="cinema-poster poster-a">
+        <span>AVATAR</span>
+      </div>
+
+      <div class="cinema-poster poster-b">
+        <span>JOKER</span>
+      </div>
+
+      <div class="cinema-poster poster-c">
+        <span>SPIDER-MAN</span>
+      </div>
     </div>
 
-    <div class="film-strip" aria-hidden="true">
-      <i></i><i></i><i></i><i></i><i></i><i></i>
+
+    <!-- metallic movie reel -->
+    <div class="cinema-reel" aria-hidden="true">
+
+      <div class="reel-ring"></div>
+
+      <i class="reel-hole h1"></i>
+      <i class="reel-hole h2"></i>
+      <i class="reel-hole h3"></i>
+      <i class="reel-hole h4"></i>
+      <i class="reel-hole h5"></i>
+
+      <div class="reel-center"></div>
     </div>
 
-    <div class="splash-center">
-      <div class="splash-icon">
-        <span class="play-triangle"></span>
+
+    <!-- sweeping film ribbon -->
+    <div class="cinema-film film-one" aria-hidden="true">
+      <div class="film-holes top">
+        <i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
+
+      <div class="film-frames">
+        <span>XD</span>
+        <span>KINO</span>
+        <span>FILM</span>
+        <span>2026</span>
+      </div>
+
+      <div class="film-holes bottom">
+        <i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
+    </div>
+
+
+    <div class="cinema-film film-two" aria-hidden="true">
+      <div class="film-holes top">
+        <i></i><i></i><i></i><i></i><i></i>
+      </div>
+
+      <div class="film-frames">
+        <span>MOVIE</span>
+        <span>XD</span>
+        <span>KINO</span>
+      </div>
+
+      <div class="film-holes bottom">
+        <i></i><i></i><i></i><i></i><i></i>
+      </div>
+    </div>
+
+
+    <!-- clapperboard -->
+    <div class="cinema-clapper" aria-hidden="true">
+      <div class="clapper-top">
+        <i></i><i></i><i></i><i></i>
+      </div>
+
+      <div class="clapper-body">
         <b>xD</b>
+        <span>KINO</span>
+      </div>
+    </div>
+
+
+    <!-- popcorn -->
+    <div class="cinema-popcorn" aria-hidden="true">
+      <div class="popcorn-cloud">
+        <i></i><i></i><i></i><i></i><i></i>
       </div>
 
-      <div class="splash-title">
-        <strong>xD</strong> KINO
+      <div class="popcorn-box">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+
+
+    <!-- particles -->
+    <div class="cinema-particles" aria-hidden="true">
+      <i></i><i></i><i></i><i></i><i></i>
+      <i></i><i></i><i></i><i></i><i></i>
+    </div>
+
+
+    <!-- CENTER LOGO -->
+    <div class="cinema-center">
+
+      <div class="cinema-logo-box">
+        <div class="cinema-play"></div>
+        <strong>xD</strong>
       </div>
 
-      <div class="splash-subtitle">
+      <div class="cinema-brand">
+        <b>xD</b>
+        <span>KINO</span>
+      </div>
+
+      <div class="cinema-subtitle">
         Kinolar olamiga xush kelibsiz
       </div>
 
-      <div class="loading-dots">
-        <i></i><i></i><i></i>
+      <div class="cinema-loading" aria-label="Yuklanmoqda">
+        <i></i>
+        <i></i>
+        <i></i>
       </div>
+
     </div>
+
   </div>
 
 
@@ -288,6 +392,6 @@
 
   <div id="toast" class="toast"></div>
 
-  <script src="/static/app.js?v=final-v12-ui"></script>
+  <script src="/static/app.js?v=final-v13-cinema"></script>
 </body>
 </html>

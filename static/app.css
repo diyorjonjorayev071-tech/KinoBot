@@ -1652,3 +1652,1070 @@ button {
     right: 7px;
   }
 }
+
+
+/* =========================================================
+   FINAL_V13_CINEMA_SPLASH
+   ========================================================= */
+
+.cinema-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  overflow: hidden;
+
+  display: block;
+
+  background:
+    radial-gradient(
+      circle at 50% 44%,
+      rgba(31, 255, 77, .13),
+      transparent 27%
+    ),
+    radial-gradient(
+      circle at 16% 30%,
+      rgba(28, 170, 60, .12),
+      transparent 32%
+    ),
+    linear-gradient(
+      180deg,
+      #051007 0%,
+      #020603 45%,
+      #010301 100%
+    );
+
+  isolation: isolate;
+
+  transition:
+    opacity .52s ease,
+    visibility .52s ease,
+    transform .52s ease;
+}
+
+.cinema-splash.done {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: scale(1.025);
+}
+
+
+.cinema-bg {
+  position: absolute;
+  inset: -12%;
+
+  background:
+    radial-gradient(
+      circle at 50% 52%,
+      rgba(59, 255, 85, .07),
+      transparent 34%
+    ),
+    repeating-linear-gradient(
+      115deg,
+      rgba(255,255,255,.012) 0,
+      rgba(255,255,255,.012) 1px,
+      transparent 1px,
+      transparent 15px
+    );
+
+  filter: blur(.2px);
+}
+
+
+.cinema-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+
+  pointer-events: none;
+
+  box-shadow:
+    inset 0 0 130px rgba(0,0,0,.96),
+    inset 0 -110px 120px rgba(0,0,0,.74);
+}
+
+
+.cinema-noise {
+  position: absolute;
+  inset: 0;
+
+  opacity: .045;
+
+  background:
+    repeating-radial-gradient(
+      circle at 10% 10%,
+      rgba(255,255,255,.8) 0 1px,
+      transparent 1px 5px
+    );
+
+  background-size: 14px 14px;
+
+  mix-blend-mode: overlay;
+}
+
+
+/* POSTER WALL */
+
+.cinema-poster-wall {
+  position: absolute;
+  inset: 0;
+
+  opacity: .42;
+
+  filter:
+    blur(1.4px)
+    saturate(.75);
+}
+
+.cinema-poster {
+  position: absolute;
+
+  width: 92px;
+  height: 136px;
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  padding: 11px 5px;
+
+  overflow: hidden;
+
+  border-radius: 9px;
+
+  border:
+    1px solid rgba(255,255,255,.09);
+
+  color:
+    rgba(255,255,255,.45);
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+
+  box-shadow:
+    0 20px 50px rgba(0,0,0,.75);
+}
+
+.cinema-poster::before {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  background:
+    linear-gradient(
+      180deg,
+      transparent,
+      rgba(0,0,0,.86)
+    );
+}
+
+.cinema-poster span {
+  position: relative;
+  z-index: 2;
+}
+
+.poster-a {
+  left: 4%;
+  top: 8%;
+
+  transform:
+    rotate(-12deg)
+    scale(.9);
+
+  background:
+    radial-gradient(
+      circle at 50% 28%,
+      #28533c,
+      #0c1710 60%
+    );
+}
+
+.poster-b {
+  right: 5%;
+  top: 15%;
+
+  transform:
+    rotate(11deg)
+    scale(.82);
+
+  background:
+    radial-gradient(
+      circle at 52% 30%,
+      #493735,
+      #160d0c 62%
+    );
+}
+
+.poster-c {
+  right: 10%;
+  bottom: 7%;
+
+  transform:
+    rotate(-8deg)
+    scale(.86);
+
+  background:
+    radial-gradient(
+      circle at 50% 26%,
+      #263c45,
+      #091014 65%
+    );
+}
+
+
+/* FILM REEL */
+
+.cinema-reel {
+  position: absolute;
+
+  left: -42px;
+  top: 18%;
+
+  width: 170px;
+  height: 170px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      #262e28 0 9%,
+      #101712 10% 18%,
+      #333b35 19% 22%,
+      #101411 23% 100%
+    );
+
+  border:
+    3px solid rgba(145,164,149,.22);
+
+  box-shadow:
+    0 0 55px rgba(53,255,90,.08),
+    inset 0 0 24px rgba(255,255,255,.06);
+
+  opacity: .78;
+
+  animation:
+    xdReel 22s linear infinite;
+}
+
+.reel-ring {
+  position: absolute;
+  inset: 9px;
+
+  border-radius: 50%;
+
+  border:
+    2px solid rgba(255,255,255,.08);
+}
+
+.reel-hole {
+  position: absolute;
+
+  width: 42px;
+  height: 42px;
+
+  border-radius: 50%;
+
+  background:
+    #030604;
+
+  border:
+    2px solid rgba(143,164,147,.17);
+
+  box-shadow:
+    inset 0 0 9px rgba(0,0,0,.9);
+}
+
+.reel-hole.h1 {
+  left: 64px;
+  top: 17px;
+}
+
+.reel-hole.h2 {
+  right: 22px;
+  top: 57px;
+}
+
+.reel-hole.h3 {
+  right: 40px;
+  bottom: 20px;
+}
+
+.reel-hole.h4 {
+  left: 28px;
+  bottom: 33px;
+}
+
+.reel-hole.h5 {
+  left: 22px;
+  top: 52px;
+}
+
+.reel-center {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 25px;
+  height: 25px;
+
+  border-radius: 50%;
+
+  transform:
+    translate(-50%,-50%);
+
+  background:
+    radial-gradient(
+      circle,
+      #070b08 0 28%,
+      #788279 30% 35%,
+      #1b221c 37%
+    );
+}
+
+
+/* FILM */
+
+.cinema-film {
+  position: absolute;
+
+  width: 370px;
+  height: 76px;
+
+  padding: 9px 0;
+
+  border:
+    2px solid rgba(99,122,104,.12);
+
+  background:
+    rgba(8,13,9,.68);
+
+  box-shadow:
+    0 15px 45px rgba(0,0,0,.75);
+
+  opacity: .62;
+}
+
+.film-one {
+  left: -115px;
+  bottom: 14%;
+
+  transform:
+    rotate(-16deg);
+}
+
+.film-two {
+  right: -180px;
+  top: 30%;
+
+  transform:
+    rotate(25deg)
+    scale(.72);
+}
+
+.film-frames {
+  height: 53px;
+
+  display: flex;
+  gap: 4px;
+
+  padding: 3px 8px;
+}
+
+.film-frames span {
+  flex: 1;
+
+  display: grid;
+  place-items: center;
+
+  background:
+    radial-gradient(
+      circle at 50% 25%,
+      #15261a,
+      #050805
+    );
+
+  border:
+    1px solid rgba(255,255,255,.06);
+
+  color:
+    rgba(119,167,126,.20);
+
+  font-size: 7px;
+  font-weight: 800;
+}
+
+.film-holes {
+  position: absolute;
+
+  left: 4px;
+  right: 4px;
+
+  display: flex;
+  justify-content: space-around;
+}
+
+.film-holes.top {
+  top: 1px;
+}
+
+.film-holes.bottom {
+  bottom: 1px;
+}
+
+.film-holes i {
+  width: 10px;
+  height: 4px;
+
+  border-radius: 1px;
+
+  background:
+    rgba(157,178,160,.16);
+}
+
+
+/* CLAPPER */
+
+.cinema-clapper {
+  position: absolute;
+
+  right: 20px;
+  bottom: 14%;
+
+  width: 105px;
+
+  opacity: .54;
+
+  transform:
+    rotate(9deg);
+
+  filter:
+    drop-shadow(
+      0 17px 25px rgba(0,0,0,.8)
+    );
+}
+
+.clapper-top {
+  height: 23px;
+
+  display: grid;
+  grid-template-columns:
+    repeat(4,1fr);
+
+  overflow: hidden;
+
+  border-radius:
+    6px 6px 1px 1px;
+
+  background:
+    #bcc2bc;
+}
+
+.clapper-top i:nth-child(odd) {
+  background:
+    #121612;
+
+  transform:
+    skewX(-25deg);
+}
+
+.clapper-body {
+  height: 57px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  border-radius:
+    0 0 7px 7px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #131913,
+      #080b08
+    );
+
+  border:
+    1px solid rgba(255,255,255,.08);
+
+  color:
+    rgba(255,255,255,.42);
+
+  font-size: 13px;
+}
+
+.clapper-body b {
+  color:
+    rgba(69,240,91,.55);
+}
+
+
+/* POPCORN */
+
+.cinema-popcorn {
+  position: absolute;
+
+  right: 31px;
+  bottom: 29%;
+
+  width: 70px;
+  height: 93px;
+
+  opacity: .45;
+
+  transform:
+    rotate(-7deg);
+}
+
+.popcorn-cloud {
+  position: relative;
+
+  z-index: 2;
+
+  height: 35px;
+}
+
+.popcorn-cloud i {
+  position: absolute;
+
+  width: 27px;
+  height: 24px;
+
+  border-radius: 50%;
+
+  background:
+    #ddd8c5;
+
+  box-shadow:
+    inset -5px -6px 10px
+    rgba(100,80,50,.18);
+}
+
+.popcorn-cloud i:nth-child(1) {
+  left: 4px;
+  top: 8px;
+}
+
+.popcorn-cloud i:nth-child(2) {
+  left: 21px;
+  top: 0;
+}
+
+.popcorn-cloud i:nth-child(3) {
+  right: 3px;
+  top: 8px;
+}
+
+.popcorn-cloud i:nth-child(4) {
+  left: 13px;
+  top: 16px;
+}
+
+.popcorn-cloud i:nth-child(5) {
+  right: 13px;
+  top: 16px;
+}
+
+.popcorn-box {
+  position: absolute;
+
+  left: 10px;
+  bottom: 0;
+
+  width: 52px;
+  height: 64px;
+
+  display: flex;
+
+  overflow: hidden;
+
+  clip-path:
+    polygon(
+      6% 0,
+      94% 0,
+      82% 100%,
+      18% 100%
+    );
+
+  background:
+    #e9e7d9;
+}
+
+.popcorn-box span {
+  flex: 1;
+}
+
+.popcorn-box span:nth-child(odd) {
+  background:
+    #313b32;
+}
+
+
+/* PARTICLES */
+
+.cinema-particles i {
+  position: absolute;
+
+  width: 3px;
+  height: 3px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(78,255,106,.52);
+
+  box-shadow:
+    0 0 10px
+    rgba(74,255,100,.65);
+
+  animation:
+    xdParticle 3.4s ease-in-out infinite;
+}
+
+.cinema-particles i:nth-child(1) {
+  left: 17%;
+  top: 42%;
+}
+
+.cinema-particles i:nth-child(2) {
+  left: 27%;
+  top: 66%;
+  animation-delay: -.7s;
+}
+
+.cinema-particles i:nth-child(3) {
+  left: 78%;
+  top: 44%;
+  animation-delay: -1.4s;
+}
+
+.cinema-particles i:nth-child(4) {
+  left: 83%;
+  top: 70%;
+  animation-delay: -.2s;
+}
+
+.cinema-particles i:nth-child(5) {
+  left: 11%;
+  top: 77%;
+  animation-delay: -2s;
+}
+
+.cinema-particles i:nth-child(6) {
+  left: 66%;
+  top: 20%;
+  animation-delay: -1.1s;
+}
+
+.cinema-particles i:nth-child(7) {
+  left: 38%;
+  top: 23%;
+  animation-delay: -2.5s;
+}
+
+.cinema-particles i:nth-child(8) {
+  left: 91%;
+  top: 37%;
+  animation-delay: -.8s;
+}
+
+.cinema-particles i:nth-child(9) {
+  left: 5%;
+  top: 51%;
+  animation-delay: -1.8s;
+}
+
+.cinema-particles i:nth-child(10) {
+  left: 59%;
+  top: 81%;
+  animation-delay: -.3s;
+}
+
+
+/* CENTER */
+
+.cinema-center {
+  position: absolute;
+
+  z-index: 50;
+
+  left: 50%;
+  top: 50%;
+
+  width: min(85vw,330px);
+
+  transform:
+    translate(-50%,-52%);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  text-align: center;
+}
+
+.cinema-logo-box {
+  position: relative;
+
+  width: 85px;
+  height: 85px;
+
+  display: grid;
+  place-items: center;
+
+  overflow: hidden;
+
+  border-radius: 23px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #58ff6e,
+      #1dd848
+    );
+
+  color:
+    #061007;
+
+  box-shadow:
+    0 0 25px rgba(46,255,79,.30),
+    0 0 70px rgba(28,238,66,.17),
+    0 22px 45px rgba(0,0,0,.75);
+
+  animation:
+    xdLogoFloat 2.6s
+    ease-in-out infinite;
+}
+
+.cinema-logo-box::after {
+  content: "";
+
+  position: absolute;
+  inset: 1px;
+
+  border-radius: 22px;
+
+  border:
+    1px solid rgba(255,255,255,.34);
+
+  pointer-events: none;
+}
+
+.cinema-logo-box strong {
+  position: absolute;
+
+  right: 12px;
+  bottom: 13px;
+
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.cinema-play {
+  position: absolute;
+
+  left: 19px;
+  top: 29px;
+
+  width: 0;
+  height: 0;
+
+  border-top:
+    13px solid transparent;
+
+  border-bottom:
+    13px solid transparent;
+
+  border-left:
+    20px solid #071108;
+}
+
+.cinema-brand {
+  margin-top: 23px;
+
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+
+  text-shadow:
+    0 0 25px rgba(69,240,91,.15);
+}
+
+.cinema-brand b {
+  color: #f4f7f4;
+}
+
+.cinema-brand span {
+  color: #49f45f;
+}
+
+.cinema-subtitle {
+  margin-top: 8px;
+
+  color:
+    rgba(204,218,206,.61);
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
+  font-size: 11px;
+  letter-spacing: .35px;
+}
+
+.cinema-loading {
+  margin-top: 31px;
+
+  display: flex;
+  gap: 8px;
+}
+
+.cinema-loading i {
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(143,160,146,.30);
+}
+
+.cinema-loading i:nth-child(2) {
+  background:
+    #45ef5b;
+
+  box-shadow:
+    0 0 12px
+    rgba(69,239,91,.72);
+
+  animation:
+    xdLoading 1.05s
+    ease-in-out infinite;
+}
+
+
+/* =========================================================
+   FINAL V13 MICRO DETAILS
+   ========================================================= */
+
+.btn-secondary.active {
+  color: var(--green);
+
+  border-color:
+    rgba(67,240,91,.30);
+
+  background:
+    rgba(67,240,91,.10);
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(67,240,91,.04);
+}
+
+.movie-name {
+  min-height: 34px;
+
+  display:
+    -webkit-box;
+
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+
+  overflow: hidden;
+
+  line-height: 1.35;
+}
+
+.story-title {
+  min-height: 30px;
+
+  display:
+    -webkit-box;
+
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+
+  overflow: hidden;
+
+  white-space: normal;
+}
+
+.movie-row,
+.story-strip,
+.genre-strip {
+  scroll-snap-type:
+    x proximity;
+
+  -webkit-overflow-scrolling:
+    touch;
+}
+
+.movie-row > *,
+.story-strip > *,
+.genre-strip > * {
+  scroll-snap-align:
+    start;
+}
+
+.genre-card {
+  min-width: 122px;
+}
+
+.genre-card strong {
+  overflow: hidden;
+
+  white-space: nowrap;
+
+  text-overflow: ellipsis;
+}
+
+.topbar {
+  min-height: 60px;
+}
+
+.page-view {
+  padding-top:
+    calc(
+      78px +
+      env(safe-area-inset-top,0px)
+    );
+}
+
+.hero-content {
+  padding-bottom:
+    max(
+      28px,
+      env(safe-area-inset-bottom,0px)
+    );
+}
+
+.bottom-nav {
+  padding-bottom:
+    max(
+      6px,
+      env(safe-area-inset-bottom,0px)
+    );
+}
+
+
+/* ANIMATIONS */
+
+@keyframes xdReel {
+  to {
+    transform:
+      rotate(360deg);
+  }
+}
+
+@keyframes xdLogoFloat {
+  0%,
+  100% {
+    transform:
+      translateY(0)
+      scale(1);
+  }
+
+  50% {
+    transform:
+      translateY(-5px)
+      scale(1.025);
+  }
+}
+
+@keyframes xdLoading {
+  50% {
+    transform:
+      scale(1.6);
+
+    opacity: .55;
+  }
+}
+
+@keyframes xdParticle {
+  0%,
+  100% {
+    transform:
+      translateY(0);
+
+    opacity: .22;
+  }
+
+  50% {
+    transform:
+      translateY(-11px);
+
+    opacity: .85;
+  }
+}
+
+
+/* SMALL PHONES */
+
+@media (max-width: 390px) {
+
+  .cinema-reel {
+    left: -60px;
+
+    transform:
+      scale(.86);
+  }
+
+  .cinema-clapper {
+    right: 5px;
+
+    transform:
+      scale(.87)
+      rotate(9deg);
+  }
+
+  .cinema-popcorn {
+    right: 17px;
+
+    transform:
+      scale(.86)
+      rotate(-7deg);
+  }
+
+  .movie-card {
+    flex-basis: 118px;
+
+    width: 118px;
+  }
+}
+
+
+/* REDUCED MOTION */
+
+@media (
+  prefers-reduced-motion:
+  reduce
+) {
+
+  .cinema-reel,
+  .cinema-logo-box,
+  .cinema-loading i,
+  .cinema-particles i {
+    animation: none !important;
+  }
+}

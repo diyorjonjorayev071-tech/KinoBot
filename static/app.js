@@ -1,6 +1,11 @@
 
 const tg = window.Telegram?.WebApp || null;
 
+// FINAL_V13_SPLASH_TIMER
+const XD_SPLASH_STARTED_AT = Date.now();
+const XD_SPLASH_MIN_MS = 1850;
+
+
 try {
   tg?.ready();
   tg?.expand();
@@ -34,7 +39,7 @@ function escapeHtml(value='') {
 
 
 function posterUrl(code) {
-  return `/api/poster/${encodeURIComponent(code)}?v=final-v12-ui`;
+  return `/api/poster/${encodeURIComponent(code)}?v=final-v13-cinema`;
 }
 
 
@@ -366,6 +371,11 @@ function openMovie(item) {
 
   $('#modalFavorite').onclick = () => toggleFavorite(item);
 
+  $('#modalFavorite').classList.toggle(
+    'active',
+    state.favorites.has(code)
+  );
+
   $('#movieModal').classList.remove('hidden');
 
   document.body.style.overflow = 'hidden';
@@ -399,6 +409,19 @@ async function toggleFavorite(item) {
       state.favorites.delete(Number(item.code));
       toast('Sevimlilardan olib tashlandi');
     }
+
+    // FINAL_V13_FAVORITE_STATE
+    if (
+      state.selected &&
+      Number(state.selected.code) === Number(item.code)
+    ) {
+      $('#modalFavorite').classList.toggle(
+        'active',
+        state.favorites.has(Number(item.code))
+      );
+    }
+
+    loadProfile().catch?.(() => {});
 
   } catch (error) {
     toast(
@@ -452,9 +475,10 @@ function renderGenres(genres) {
 
     btn.onclick = () => {
 
+      activeGenre = btn.dataset.genre || '';
       setView('search');
 
-      $('#searchInput').value = btn.dataset.genre;
+      $('#searchInput').value = '';
 
       searchMovies();
 
@@ -579,10 +603,17 @@ async function loadHome() {
 
     setTimeout(() => {
       $('#splash').classList.add('done');
-    }, 650);
+    }, Math.max(
+      120,
+      XD_SPLASH_MIN_MS - (Date.now() - XD_SPLASH_STARTED_AT)
+    ));
 
   }
 }
+
+
+// FINAL_V13_GENRE_FILTER
+let activeGenre = '';
 
 
 async function searchMovies() {
@@ -599,6 +630,7 @@ async function searchMovies() {
   const params =
     new URLSearchParams({
       q,
+      genre:activeGenre,
       content_type:type,
       sort,
       limit:'60'
@@ -757,6 +789,8 @@ $$('[data-close-modal]').forEach(el => {
 
 
 $('#searchInput').addEventListener('input',() => {
+
+  activeGenre = '';
 
   clearTimeout(state.searchTimer);
 
