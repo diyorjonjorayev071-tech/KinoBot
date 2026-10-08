@@ -39,7 +39,7 @@ function escapeHtml(value='') {
 
 
 function posterUrl(code) {
-  return `/api/poster/${encodeURIComponent(code)}?v=final-v13-cinema`;
+  return `/api/poster/${encodeURIComponent(code)}?v=final-v14-premium`;
 }
 
 
@@ -145,7 +145,7 @@ function movieSubtitle(item) {
     item.country
   ].filter(Boolean);
 
-  return values.join(' ? ') || 'xD KINO';
+  return values.join(' / ') || 'xD KINO';
 }
 
 
@@ -156,7 +156,11 @@ function movieCard(item) {
   movieIndex.set(code, item);
 
   const type =
-    escapeHtml(item.content_type || item.type || 'Kino');
+    escapeHtml(
+      item.content_type ||
+      item.type ||
+      'Kino'
+    );
 
   const imdb = imdbNumber(item.imdb);
 
@@ -171,14 +175,15 @@ function movieCard(item) {
           src="${posterUrl(code)}"
           alt="${escapeHtml(item.name || 'Kino')}"
           loading="lazy"
-          onerror="this.style.display='none'"
         >
 
-        <div class="movie-type">${type}</div>
+        <div class="movie-type">
+          ${type}
+        </div>
 
         ${
           imdb > 0
-            ? `<div class="movie-imdb">? ${imdb.toFixed(1)}</div>`
+            ? `<div class="movie-imdb">IMDb ${imdb.toFixed(1)}</div>`
             : ''
         }
 
@@ -201,6 +206,7 @@ function storyCard(item) {
   const code = Number(item.code);
 
   movieIndex.set(code, item);
+
   const imdb = imdbNumber(item.imdb);
 
   return `
@@ -215,12 +221,11 @@ function storyCard(item) {
           src="${posterUrl(code)}"
           alt="${escapeHtml(item.name || '')}"
           loading="lazy"
-          onerror="this.style.display='none'"
         >
 
         ${
-          imdb
-            ? `<div class="story-score">? ${imdb.toFixed(1)}</div>`
+          imdb > 0
+            ? `<div class="story-score">IMDb ${imdb.toFixed(1)}</div>`
             : ''
         }
 
@@ -303,7 +308,7 @@ function setHero(item) {
         : ''
     ]
     .filter(Boolean)
-    .join(' ? ');
+    .join(' / ');
 
   $('#heroDescription').textContent =
     item.description ||
@@ -361,7 +366,7 @@ function openMovie(item) {
         : ''
     ]
     .filter(Boolean)
-    .join(' ? ');
+    .join(' / ');
 
   $('#modalDescription').textContent =
     item.description ||
@@ -467,7 +472,7 @@ function renderGenres(genres) {
       data-genre="${escapeHtml(genre)}"
     >
       <strong>${escapeHtml(genre)}</strong>
-      <span>Ko?rish ?</span>
+      <span>Ko'rish</span>
     </button>
   `).join('');
 
@@ -714,16 +719,52 @@ async function loadProfile() {
     $('#profileUsername').textContent =
       user.username
         ? `@${user.username}`
-        : 'Telegram foydalanuvchi';
+        : 'Telegram foydalanuvchisi';
 
-    const letter =
-      (user.first_name || 'D')
-        .trim()
-        .charAt(0)
-        .toUpperCase();
+    const photo =
+      String(user.photo_url || '').trim();
 
-    $('#avatarLetter').textContent = letter;
-    $('#profileAvatarLetter').textContent = letter;
+    const topImage =
+      $('#topAvatarImage');
+
+    const topFallback =
+      $('#topAvatarFallback');
+
+    const profileImage =
+      $('#profileAvatarImage');
+
+    const profileFallback =
+      $('#profileAvatarFallback');
+
+    const useFallback = () => {
+
+      topImage?.classList.add('hidden');
+      profileImage?.classList.add('hidden');
+
+      topFallback?.classList.remove('hidden');
+      profileFallback?.classList.remove('hidden');
+
+    };
+
+    if (photo) {
+
+      topImage.src = photo;
+      profileImage.src = photo;
+
+      topImage.classList.remove('hidden');
+      profileImage.classList.remove('hidden');
+
+      topFallback.classList.add('hidden');
+      profileFallback.classList.add('hidden');
+
+      topImage.onerror = useFallback;
+      profileImage.onerror = useFallback;
+
+    } else {
+
+      useFallback();
+
+    }
   }
 
   try {

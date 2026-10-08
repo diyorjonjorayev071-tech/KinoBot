@@ -9,9 +9,14 @@
   <meta name="theme-color" content="#050805">
   <title>xD KINO</title>
 
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/static/app.css?v=final-v13-cinema">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <link rel="stylesheet" href="/static/app.css?v=final-v14-premium">
 </head>
 
 <body>
@@ -134,12 +139,11 @@
       </div>
 
       <div class="cinema-brand">
-        <b>xD</b>
-        <span>KINO</span>
+        <b>xD</b><span>KINO</span>
       </div>
 
       <div class="cinema-subtitle">
-        Kinolar olamiga xush kelibsiz
+        Kino. Serial. Multfilm.
       </div>
 
       <div class="cinema-loading" aria-label="Yuklanmoqda">
@@ -166,7 +170,22 @@
         <button class="icon-button" data-nav="search" aria-label="Qidiruv"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.3"></circle><path d="M15.5 15.5L21 21"></path></svg></button>
 
         <button class="avatar-button" data-nav="profile" aria-label="Profil">
-          <span id="avatarLetter">D</span>
+          <img
+            id="topAvatarImage"
+            class="telegram-avatar-image hidden"
+            alt=""
+          >
+
+          <span
+            id="topAvatarFallback"
+            class="telegram-avatar-fallback"
+            aria-hidden="true"
+          >
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="8" r="3.7"></circle>
+              <path d="M5 20c.8-4 3.1-6 7-6s6.2 2 7 6"></path>
+            </svg>
+          </span>
         </button>
       </div>
     </header>
@@ -182,7 +201,7 @@
           <div class="hero-gradient"></div>
 
           <div class="hero-content">
-            <div class="hero-badge">xD KINO ? TAVSIYA</div>
+            <div class="hero-badge">TAVSIYA</div>
 
             <h1 id="heroTitle">Kinolar olami</h1>
 
@@ -222,9 +241,7 @@
               <h2>Janrlar</h2>
             </div>
 
-            <button class="text-button" data-nav="search">
-              Barchasi ?
-            </button>
+            <button class="text-button" data-nav="search">Barchasi</button>
           </div>
 
           <div id="genreStrip" class="genre-strip"></div>
@@ -283,7 +300,7 @@
       <section id="view-favorites" class="view page-view">
 
         <div class="page-header">
-          <div class="section-kicker">MENING RO?YXATIM</div>
+          <div class="section-kicker">MENING RO'YXATIM</div>
           <h1>Sevimlilar</h1>
         </div>
 
@@ -291,7 +308,7 @@
 
         <div id="favoritesEmpty" class="empty-state hidden">
           <div class="empty-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 5.2c-2-2-5.2-2-7.2 0L12 6.8l-1.6-1.6c-2-2-5.2-2-7.2 0s-2 5.2 0 7.2L12 21l8.8-8.6c2-2 2-5.2 0-7.2z"></path></svg></div>
-          <h3>Sevimlilar bo?sh</h3>
+          <h3>Sevimlilar bo'sh</h3>
           <p>Yoqtirgan kinolaringizni shu yerga saqlashingiz mumkin.</p>
         </div>
 
@@ -304,7 +321,22 @@
 
         <div class="profile-card">
           <div class="profile-avatar">
-            <span id="profileAvatarLetter">D</span>
+            <img
+              id="profileAvatarImage"
+              class="profile-avatar-image hidden"
+              alt=""
+            >
+
+            <span
+              id="profileAvatarFallback"
+              class="profile-avatar-fallback"
+              aria-hidden="true"
+            >
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="8" r="3.8"></circle>
+                <path d="M5 20c.8-4 3.1-6 7-6s6.2 2 7 6"></path>
+              </svg>
+            </span>
           </div>
 
           <h1 id="profileName">xD KINO</h1>
@@ -318,7 +350,7 @@
 
             <div>
               <strong id="historyCount">0</strong>
-              <span>Ko?rilgan</span>
+              <span>Ko'rilgan</span>
             </div>
 
             <div>
@@ -326,14 +358,6 @@
               <span>Kontent</span>
             </div>
           </div>
-        </div>
-
-        <div class="info-card">
-          <div>
-            <small>ILOVA</small>
-            <strong>xD KINO</strong>
-          </div>
-          <span id="appVersionLabel">FINAL-V12-UI</span>
         </div>
 
         <div class="bottom-space"></div>
@@ -392,6 +416,6 @@
 
   <div id="toast" class="toast"></div>
 
-  <script src="/static/app.js?v=final-v13-cinema"></script>
+  <script src="/static/app.js?v=final-v14-premium"></script>
 </body>
 </html>
