@@ -21,6 +21,7 @@ STATIC_DIR = BASE_DIR / "static"
 BOT_TOKEN = (os.getenv("BOT_TOKEN") or "").strip()
 BOT_USERNAME = (os.getenv("BOT_USERNAME") or "xDKinoCodeBot").strip().lstrip("@")
 BOT_START_PREFIX = (os.getenv("BOT_START_PREFIX") or "movie_").strip()
+LEGACY_POSTER_BASE = (os.getenv("LEGACY_POSTER_BASE") or "https://superapp-production-c942.up.railway.app").rstrip("/")
 
 app = FastAPI(title="xD KINO Clean", version="1.0.0")
 db = Database()
@@ -55,7 +56,7 @@ def health() -> dict[str, Any]:
     return {
         "status": "ok",
         "service": "xd-kino-clean",
-        "ui_version": "final-v6",
+        "ui_version": "final-v7",
         **info,
     }
 
@@ -136,37 +137,162 @@ def placeholder_svg(name: str, code: int) -> bytes:
 @app.get("/api/poster/{code}")
 async def poster(code: int) -> Response:
     info = db.poster_info(code)
+
     if info is None:
-        raise HTTPException(status_code=404, detail="Kino topilmadi.")
+        raise HTTPException(
+            status_code=404,
+            detail="Kino topilmadi.",
+        )
+
     name, file_id = info
 
     cached = poster_cache.get(code)
-    if cached and time.time() - cached[0] < 3600:
-        return Response(cached[1], media_type=cached[2], headers={"Cache-Control": "public,max-age=3600"})
 
+    if cached and time.time() - cached[0] < 3600:
+        return Response(
+            cached[1],
+            media_type=cached[2],
+            headers={
+                "Cache-Control": "public,max-age=3600",
+                "X-Poster-Source": "cache",
+            },
+        )
+
+    # 1. Telegram'dan to'g'ridan-to'g'ri
     if BOT_TOKEN and file_id:
         try:
-            timeout = httpx.Timeout(10.0, connect=7.0)
-            async with httpx.AsyncClient(timeout=timeout) as client:
-                meta = await client.get(
+            timeout = httpx.Timeout(
+                20.0,
+                connect=10.0,
+            )
+
+            async with httpx.AsyncClient(
+                timeout=timeout,
+                follow_redirects=True,
+            ) as client:
+
+                meta = await client.post(
                     f"https://api.telegram.org/bot{BOT_TOKEN}/getFile",
-                    params={"file_id": file_id},
+                    json={"file_id": file_id},
                 )
-                meta.raise_for_status()
+
                 payload = meta.json()
-                file_path = ((payload.get("result") or {}).get("file_path") or "").strip()
-                if file_path:
-                    image = await client.get(f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}")
-                    image.raise_for_status()
-                    content_type = image.headers.get("content-type", "image/jpeg").split(";")[0]
-                    if content_type.startswith("image/"):
-                        poster_cache[code] = (time.time(), image.content, content_type)
-                        return Response(image.content, media_type=content_type, headers={"Cache-Control": "public,max-age=3600"})
+
+                if not meta.is_success or not payload.get("ok"):
+                    raise RuntimeError(
+                        payload.get("description")
+                        or f"Telegram HTTP {meta.status_code}"
+                    )
+
+                file_path = (
+                    (payload.get("result") or {})
+                    .get("file_path", "")
+                    .strip()
+                )
+
+                if not file_path:
+                    raise RuntimeError(
+                        "Telegram file_path bermadi."
+                    )
+
+                image = await client.get(
+                    f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
+                )
+
+                image.raise_for_status()
+
+                content_type = (
+                    image.headers
+                    .get("content-type", "image/jpeg")
+                    .split(";")[0]
+                    .strip()
+                )
+
+                if (
+                    content_type.startswith("image/")
+                    and "svg" not in content_type
+                    and image.content
+                ):
+                    poster_cache[code] = (
+                        time.time(),
+                        image.content,
+                        content_type,
+                    )
+
+                    return Response(
+                        image.content,
+                        media_type=content_type,
+                        headers={
+                            "Cache-Control":
+                                "public,max-age=3600",
+                            "X-Poster-Source":
+                                "telegram",
+                        },
+                    )
+
         except Exception:
             pass
 
+
+    # 2. Eski SuperApp poster servisi fallback
+    try:
+        async with httpx.AsyncClient(
+            timeout=20,
+            follow_redirects=True,
+        ) as client:
+
+            legacy = await client.get(
+                f"{LEGACY_POSTER_BASE}/api/poster/{code}",
+                params={"v": "final-v7"},
+            )
+
+            content_type = (
+                legacy.headers
+                .get("content-type", "")
+                .split(";")[0]
+                .strip()
+            )
+
+            if (
+                legacy.is_success
+                and content_type.startswith("image/")
+                and "svg" not in content_type
+                and legacy.content
+            ):
+                poster_cache[code] = (
+                    time.time(),
+                    legacy.content,
+                    content_type,
+                )
+
+                return Response(
+                    legacy.content,
+                    media_type=content_type,
+                    headers={
+                        "Cache-Control":
+                            "public,max-age=3600",
+                        "X-Poster-Source":
+                            "legacy",
+                    },
+                )
+
+    except Exception:
+        pass
+
+
+    # FAQAT IKKALA USUL HAM ISHLAMASA FALLBACK
     data = placeholder_svg(name, code)
-    return Response(data, media_type="image/svg+xml", headers={"Cache-Control": "no-store, no-cache, max-age=0"})
+
+    return Response(
+        data,
+        media_type="image/svg+xml",
+        headers={
+            "Cache-Control":
+                "no-store,no-cache,max-age=0",
+            "X-Poster-Source":
+                "fallback",
+        },
+    )
 
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
