@@ -56,7 +56,7 @@ def health() -> dict[str, Any]:
     return {
         "status": "ok",
         "service": "xd-kino-clean",
-        "ui_version": "final-v9",
+        "ui_version": "final-v10",
         **info,
     }
 
@@ -217,18 +217,60 @@ async def poster(code: int) -> Response:
             if not image.is_success:
                 raise RuntimeError(f"download_http_{image.status_code}")
 
+        raw = image.content
+
+        if not raw:
+            raise RuntimeError("download_empty")
+
         content_type = (
-            image.headers.get("content-type", "image/jpeg")
+            image.headers.get("content-type", "")
             .split(";")[0]
             .strip()
+            .lower()
         )
 
+        # Telegram ba'zan rasmni application/octet-stream
+        # kabi Content-Type bilan qaytarishi mumkin.
+        # Shuning uchun haqiqiy fayl baytlarini tekshiramiz.
         if (
             not content_type.startswith("image/")
-            or "svg" in content_type.lower()
-            or not image.content
+            or "svg" in content_type
         ):
-            raise RuntimeError("download_not_image")
+            if raw.startswith(b"\\xff\\xd8\\xff"):
+                content_type = "image/jpeg"
+
+            elif raw.startswith(b"\\x89PNG\\r\\n\\x1a\\n"):
+                content_type = "image/png"
+
+            elif (
+                raw.startswith(b"RIFF")
+                and len(raw) >= 12
+                and raw[8:12] == b"WEBP"
+            ):
+                content_type = "image/webp"
+
+            elif raw.startswith((b"GIF87a", b"GIF89a")):
+                content_type = "image/gif"
+
+            else:
+                lower_path = file_path.lower()
+
+                if lower_path.endswith((".jpg", ".jpeg")):
+                    content_type = "image/jpeg"
+
+                elif lower_path.endswith(".png"):
+                    content_type = "image/png"
+
+                elif lower_path.endswith(".webp"):
+                    content_type = "image/webp"
+
+                elif lower_path.endswith(".gif"):
+                    content_type = "image/gif"
+
+                else:
+                    raise RuntimeError(
+                        "unknown_image_format"
+                    )
 
         poster_cache[code] = (
             time.time(),

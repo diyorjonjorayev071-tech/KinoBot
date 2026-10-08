@@ -34,7 +34,7 @@ function escapeHtml(value='') {
 
 
 function posterUrl(code) {
-  return `/api/poster/${encodeURIComponent(code)}?v=final-v9`;
+  return `/api/poster/${encodeURIComponent(code)}?v=final-v10`;
 }
 
 
