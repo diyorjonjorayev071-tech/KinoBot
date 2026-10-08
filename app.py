@@ -56,7 +56,7 @@ def health() -> dict[str, Any]:
     return {
         "status": "ok",
         "service": "xd-kino-clean",
-        "ui_version": "final-v8",
+        "ui_version": "final-v9",
         **info,
     }
 
@@ -140,10 +140,7 @@ async def poster(code: int) -> Response:
     info = db.poster_info(code)
 
     if info is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Kino topilmadi.",
-        )
+        raise HTTPException(status_code=404, detail="Kino topilmadi.")
 
     name, file_id = info
 
@@ -163,79 +160,122 @@ async def poster(code: int) -> Response:
             },
         )
 
+    if not file_id:
+        data = placeholder_svg(name, code)
+        return Response(
+            data,
+            media_type="image/svg+xml",
+            headers={
+                "Cache-Control": "no-store",
+                "X-Poster-Source": "fallback",
+                "X-Poster-Error": "no_file_id",
+            },
+        )
 
-    # Worker allaqachon haqiqiy Telegram bot token bilan ishlayapti.
-    # Clean servis tokenni bilmaydi va bilishi ham shart emas.
-    worker_url = (
-        f"http://worker.railway.internal:8080/poster/{code}"
-    )
+    if not BOT_TOKEN:
+        data = placeholder_svg(name, code)
+        return Response(
+            data,
+            media_type="image/svg+xml",
+            headers={
+                "Cache-Control": "no-store",
+                "X-Poster-Source": "fallback",
+                "X-Poster-Error": "no_bot_token",
+            },
+        )
 
     try:
-
         async with httpx.AsyncClient(
-            timeout=httpx.Timeout(
-                25.0,
-                connect=8.0,
-            ),
+            timeout=25,
             follow_redirects=True,
         ) as client:
 
-            upstream = await client.get(
-                worker_url
+            meta = await client.post(
+                f"https://api.telegram.org/bot{BOT_TOKEN}/getFile",
+                json={"file_id": file_id},
             )
 
+            if not meta.is_success:
+                raise RuntimeError(f"getFile_http_{meta.status_code}")
+
+            payload = meta.json()
+
+            if not payload.get("ok"):
+                raise RuntimeError("getFile_not_ok")
+
+            file_path = str(
+                (payload.get("result") or {}).get("file_path") or ""
+            ).strip()
+
+            if not file_path:
+                raise RuntimeError("no_file_path")
+
+            image = await client.get(
+                f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
+            )
+
+            if not image.is_success:
+                raise RuntimeError(f"download_http_{image.status_code}")
+
         content_type = (
-            upstream.headers
-            .get("content-type", "")
+            image.headers.get("content-type", "image/jpeg")
             .split(";")[0]
             .strip()
         )
 
         if (
-            upstream.is_success
-            and content_type.startswith("image/")
-            and "svg" not in content_type.lower()
-            and upstream.content
+            not content_type.startswith("image/")
+            or "svg" in content_type.lower()
+            or not image.content
         ):
+            raise RuntimeError("download_not_image")
 
-            poster_cache[code] = (
-                time.time(),
-                upstream.content,
-                content_type,
-            )
+        poster_cache[code] = (
+            time.time(),
+            image.content,
+            content_type,
+        )
 
-            return Response(
-                content=upstream.content,
-                media_type=content_type,
-                headers={
-                    "Cache-Control":
-                        "public,max-age=3600",
-                    "X-Poster-Source":
-                        "worker",
-                },
-            )
+        return Response(
+            image.content,
+            media_type=content_type,
+            headers={
+                "Cache-Control": "public,max-age=3600",
+                "X-Poster-Source": "telegram",
+            },
+        )
 
-    except Exception:
-        pass
+    except Exception as exc:
 
+        error_code = type(exc).__name__
 
-    # Worker hali deploy bo'lmagan paytda
-    # vaqtinchalik fallback.
-    data = placeholder_svg(
-        name,
-        code,
-    )
+        text = str(exc)
 
-    return Response(
-        content=data,
-        media_type="image/svg+xml",
-        headers={
-            "Cache-Control":
-                "no-store,no-cache,max-age=0",
-            "X-Poster-Source":
-                "fallback",
-        },
-    )
+        for known in (
+            "getFile_http_401",
+            "getFile_http_404",
+            "getFile_http_400",
+            "getFile_not_ok",
+            "no_file_path",
+            "download_http_401",
+            "download_http_404",
+            "download_not_image",
+        ):
+            if known in text:
+                error_code = known
+                break
+
+        data = placeholder_svg(name, code)
+
+        return Response(
+            data,
+            media_type="image/svg+xml",
+            headers={
+                "Cache-Control": "no-store",
+                "X-Poster-Source": "fallback",
+                "X-Poster-Error": error_code,
+            },
+        )
 
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
