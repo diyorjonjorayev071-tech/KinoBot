@@ -1,3 +1,5 @@
+import threading
+import os
 import logging
 
 from telegram.ext import (
@@ -83,7 +85,33 @@ def build_application() -> Application:
     return app
 
 
+# INTERNAL_POSTER_PROXY_V8
+def _run_internal_poster_proxy() -> None:
+    try:
+        import uvicorn
+        from poster_proxy import app as poster_proxy_app
+
+        uvicorn.run(
+            poster_proxy_app,
+            host="0.0.0.0",
+            port=int(os.getenv("POSTER_PROXY_PORT", "8080")),
+            log_level="warning",
+            access_log=False,
+        )
+
+    except Exception:
+        logging.exception(
+            "Internal poster proxy ishga tushmadi."
+        )
+
+
 def main() -> None:
+    threading.Thread(
+        target=_run_internal_poster_proxy,
+        daemon=True,
+        name="xd-poster-proxy",
+    ).start()
+
     app = build_application()
     print("✅ xD KINO BOT ishga tushdi")
     app.run_polling(allowed_updates=["message", "callback_query"])
