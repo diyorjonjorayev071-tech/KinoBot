@@ -56,7 +56,7 @@ def health() -> dict[str, Any]:
     return {
         "status": "ok",
         "service": "xd-kino-clean",
-        "ui_version": "final-v7",
+        "ui_version": "final-v8",
         **info,
     }
 
@@ -136,6 +136,7 @@ def placeholder_svg(name: str, code: int) -> bytes:
 
 @app.get("/api/poster/{code}")
 async def poster(code: int) -> Response:
+
     info = db.poster_info(code)
 
     if info is None:
@@ -148,9 +149,13 @@ async def poster(code: int) -> Response:
 
     cached = poster_cache.get(code)
 
-    if cached and time.time() - cached[0] < 3600:
+    if (
+        cached
+        and len(cached) >= 3
+        and time.time() - cached[0] < 3600
+    ):
         return Response(
-            cached[1],
+            content=cached[1],
             media_type=cached[2],
             headers={
                 "Cache-Control": "public,max-age=3600",
@@ -158,133 +163,71 @@ async def poster(code: int) -> Response:
             },
         )
 
-    # 1. Telegram'dan to'g'ridan-to'g'ri
-    if BOT_TOKEN and file_id:
-        try:
-            timeout = httpx.Timeout(
-                20.0,
-                connect=10.0,
-            )
 
-            async with httpx.AsyncClient(
-                timeout=timeout,
-                follow_redirects=True,
-            ) as client:
+    # Worker allaqachon haqiqiy Telegram bot token bilan ishlayapti.
+    # Clean servis tokenni bilmaydi va bilishi ham shart emas.
+    worker_url = (
+        f"http://worker.railway.internal:8080/poster/{code}"
+    )
 
-                meta = await client.post(
-                    f"https://api.telegram.org/bot{BOT_TOKEN}/getFile",
-                    json={"file_id": file_id},
-                )
-
-                payload = meta.json()
-
-                if not meta.is_success or not payload.get("ok"):
-                    raise RuntimeError(
-                        payload.get("description")
-                        or f"Telegram HTTP {meta.status_code}"
-                    )
-
-                file_path = (
-                    (payload.get("result") or {})
-                    .get("file_path", "")
-                    .strip()
-                )
-
-                if not file_path:
-                    raise RuntimeError(
-                        "Telegram file_path bermadi."
-                    )
-
-                image = await client.get(
-                    f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
-                )
-
-                image.raise_for_status()
-
-                content_type = (
-                    image.headers
-                    .get("content-type", "image/jpeg")
-                    .split(";")[0]
-                    .strip()
-                )
-
-                if (
-                    content_type.startswith("image/")
-                    and "svg" not in content_type
-                    and image.content
-                ):
-                    poster_cache[code] = (
-                        time.time(),
-                        image.content,
-                        content_type,
-                    )
-
-                    return Response(
-                        image.content,
-                        media_type=content_type,
-                        headers={
-                            "Cache-Control":
-                                "public,max-age=3600",
-                            "X-Poster-Source":
-                                "telegram",
-                        },
-                    )
-
-        except Exception:
-            pass
-
-
-    # 2. Eski SuperApp poster servisi fallback
     try:
+
         async with httpx.AsyncClient(
-            timeout=20,
+            timeout=httpx.Timeout(
+                25.0,
+                connect=8.0,
+            ),
             follow_redirects=True,
         ) as client:
 
-            legacy = await client.get(
-                f"{LEGACY_POSTER_BASE}/api/poster/{code}",
-                params={"v": "final-v7"},
+            upstream = await client.get(
+                worker_url
             )
 
-            content_type = (
-                legacy.headers
-                .get("content-type", "")
-                .split(";")[0]
-                .strip()
+        content_type = (
+            upstream.headers
+            .get("content-type", "")
+            .split(";")[0]
+            .strip()
+        )
+
+        if (
+            upstream.is_success
+            and content_type.startswith("image/")
+            and "svg" not in content_type.lower()
+            and upstream.content
+        ):
+
+            poster_cache[code] = (
+                time.time(),
+                upstream.content,
+                content_type,
             )
 
-            if (
-                legacy.is_success
-                and content_type.startswith("image/")
-                and "svg" not in content_type
-                and legacy.content
-            ):
-                poster_cache[code] = (
-                    time.time(),
-                    legacy.content,
-                    content_type,
-                )
-
-                return Response(
-                    legacy.content,
-                    media_type=content_type,
-                    headers={
-                        "Cache-Control":
-                            "public,max-age=3600",
-                        "X-Poster-Source":
-                            "legacy",
-                    },
-                )
+            return Response(
+                content=upstream.content,
+                media_type=content_type,
+                headers={
+                    "Cache-Control":
+                        "public,max-age=3600",
+                    "X-Poster-Source":
+                        "worker",
+                },
+            )
 
     except Exception:
         pass
 
 
-    # FAQAT IKKALA USUL HAM ISHLAMASA FALLBACK
-    data = placeholder_svg(name, code)
+    # Worker hali deploy bo'lmagan paytda
+    # vaqtinchalik fallback.
+    data = placeholder_svg(
+        name,
+        code,
+    )
 
     return Response(
-        data,
+        content=data,
         media_type="image/svg+xml",
         headers={
             "Cache-Control":
@@ -296,6 +239,25 @@ async def poster(code: int) -> Response:
 
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
+
+# FINAL_V8_NO_CACHE
+@app.middleware("http")
+async def final_v8_no_cache(request, call_next):
+    response = await call_next(request)
+
+    if (
+        request.url.path == "/"
+        or request.url.path.startswith("/static/")
+    ):
+        response.headers["Cache-Control"] = (
+            "no-store, no-cache, must-revalidate, max-age=0"
+        )
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+
+    return response
 
 
 @app.get("/")
