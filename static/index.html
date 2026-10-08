@@ -11,7 +11,7 @@
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <link rel="stylesheet" href="/static/app.css?v=final-v11">
+  <link rel="stylesheet" href="/static/app.css?v=final-v12-ui">
 </head>
 
 <body>
@@ -54,14 +54,12 @@
 
     <header class="topbar">
       <button class="logo-button" data-nav="home">
-        <span class="logo-play">?</span>
-        <span><b>xD</b>KINO</span>
+        <span class="logo-play"><svg class="ui-icon ui-icon-fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg></span>
+        <span><b>xD</b> KINO</span>
       </button>
 
       <div class="top-actions">
-        <button class="icon-button" data-nav="search" aria-label="Qidiruv">
-          ?
-        </button>
+        <button class="icon-button" data-nav="search" aria-label="Qidiruv"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.3"></circle><path d="M15.5 15.5L21 21"></path></svg></button>
 
         <button class="avatar-button" data-nav="profile" aria-label="Profil">
           <span id="avatarLetter">D</span>
@@ -93,13 +91,9 @@
             </p>
 
             <div class="hero-actions">
-              <button id="heroWatch" class="btn btn-primary">
-                ? Tomosha qilish
-              </button>
+              <button id="heroWatch" class="btn btn-primary"><svg class="ui-icon ui-icon-fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg><span>Tomosha qilish</span></button>
 
-              <button id="heroDetails" class="btn btn-secondary">
-                ? Batafsil
-              </button>
+              <button id="heroDetails" class="btn btn-secondary"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 10.5V17"></path><path d="M12 7h.01"></path></svg><span>Batafsil</span></button>
             </div>
           </div>
         </section>
@@ -148,7 +142,7 @@
         </div>
 
         <div class="search-box">
-          <span>?</span>
+          <span class="search-field-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.3"></circle><path d="M15.5 15.5L21 21"></path></svg></span>
           <input
             id="searchInput"
             type="search"
@@ -192,7 +186,7 @@
         <div id="favoritesGrid" class="movie-grid"></div>
 
         <div id="favoritesEmpty" class="empty-state hidden">
-          <div class="empty-icon">?</div>
+          <div class="empty-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 5.2c-2-2-5.2-2-7.2 0L12 6.8l-1.6-1.6c-2-2-5.2-2-7.2 0s-2 5.2 0 7.2L12 21l8.8-8.6c2-2 2-5.2 0-7.2z"></path></svg></div>
           <h3>Sevimlilar bo?sh</h3>
           <p>Yoqtirgan kinolaringizni shu yerga saqlashingiz mumkin.</p>
         </div>
@@ -224,7 +218,7 @@
             </div>
 
             <div>
-              <strong>292+</strong>
+              <strong id="contentCount">292+</strong>
               <span>Kontent</span>
             </div>
           </div>
@@ -235,7 +229,7 @@
             <small>ILOVA</small>
             <strong>xD KINO</strong>
           </div>
-          <span>clean-v1</span>
+          <span id="appVersionLabel">FINAL-V12-UI</span>
         </div>
 
         <div class="bottom-space"></div>
@@ -247,25 +241,13 @@
     <!-- BOTTOM NAVIGATION -->
     <nav class="bottom-nav">
 
-      <button class="nav-item active" data-nav="home">
-        <span>?</span>
-        <small>Bosh sahifa</small>
-      </button>
+      <button class="nav-item active" data-nav="home"><span class="nav-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.5L12 3.5l8.5 7"></path><path d="M5.5 9.5V20h13V9.5"></path><path d="M9.5 20v-6h5v6"></path></svg></span><small>Bosh sahifa</small></button>
 
-      <button class="nav-item" data-nav="search">
-        <span>?</span>
-        <small>Qidiruv</small>
-      </button>
+      <button class="nav-item" data-nav="search"><span class="nav-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.3"></circle><path d="M15.5 15.5L21 21"></path></svg></span><small>Qidiruv</small></button>
 
-      <button class="nav-item" data-nav="favorites">
-        <span>?</span>
-        <small>Sevimli</small>
-      </button>
+      <button class="nav-item" data-nav="favorites"><span class="nav-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 5.2c-2-2-5.2-2-7.2 0L12 6.8l-1.6-1.6c-2-2-5.2-2-7.2 0s-2 5.2 0 7.2L12 21l8.8-8.6c2-2 2-5.2 0-7.2z"></path></svg></span><small>Sevimli</small></button>
 
-      <button class="nav-item" data-nav="profile">
-        <span>?</span>
-        <small>Profil</small>
-      </button>
+      <button class="nav-item" data-nav="profile"><span class="nav-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 21c.8-4.2 3.2-6.3 7.5-6.3s6.7 2.1 7.5 6.3"></path></svg></span><small>Profil</small></button>
 
     </nav>
 
@@ -279,7 +261,7 @@
 
     <div class="modal-sheet">
 
-      <button class="modal-close" data-close-modal>?</button>
+      <button class="modal-close" data-close-modal><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"></path><path d="M18 6L6 18"></path></svg></button>
 
       <div id="modalPoster" class="modal-poster"></div>
 
@@ -293,13 +275,9 @@
         <p id="modalDescription" class="modal-description"></p>
 
         <div class="modal-actions">
-          <button id="modalWatch" class="btn btn-primary">
-            ? Tomosha qilish
-          </button>
+          <button id="modalWatch" class="btn btn-primary"><svg class="ui-icon ui-icon-fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg><span>Tomosha qilish</span></button>
 
-          <button id="modalFavorite" class="btn btn-secondary">
-            ? Sevimli
-          </button>
+          <button id="modalFavorite" class="btn btn-secondary"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 5.2c-2-2-5.2-2-7.2 0L12 6.8l-1.6-1.6c-2-2-5.2-2-7.2 0s-2 5.2 0 7.2L12 21l8.8-8.6c2-2 2-5.2 0-7.2z"></path></svg><span>Sevimli</span></button>
         </div>
       </div>
 
@@ -310,6 +288,6 @@
 
   <div id="toast" class="toast"></div>
 
-  <script src="/static/app.js?v=final-v11"></script>
+  <script src="/static/app.js?v=final-v12-ui"></script>
 </body>
 </html>

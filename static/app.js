@@ -34,7 +34,7 @@ function escapeHtml(value='') {
 
 
 function posterUrl(code) {
-  return `/api/poster/${encodeURIComponent(code)}?v=final-v11`;
+  return `/api/poster/${encodeURIComponent(code)}?v=final-v12-ui`;
 }
 
 
@@ -129,6 +129,10 @@ function toast(message) {
 }
 
 
+// FINAL_V12_MOVIE_INDEX
+const movieIndex = new Map();
+
+
 function movieSubtitle(item) {
 
   const values = [
@@ -143,6 +147,8 @@ function movieSubtitle(item) {
 function movieCard(item) {
 
   const code = Number(item.code);
+
+  movieIndex.set(code, item);
 
   const type =
     escapeHtml(item.content_type || item.type || 'Kino');
@@ -188,6 +194,8 @@ function movieCard(item) {
 function storyCard(item) {
 
   const code = Number(item.code);
+
+  movieIndex.set(code, item);
   const imdb = imdbNumber(item.imdb);
 
   return `
@@ -233,6 +241,7 @@ function bindMovieClicks(root=document) {
       const all = collectHomeMovies();
 
       const item =
+        movieIndex.get(code) ||
         all.find(x => Number(x.code) === code) ||
         state.selected;
 
@@ -777,3 +786,37 @@ document.addEventListener('keydown',event => {
 
 loadProfile();
 loadHome();
+loadBuildInfo();
+
+
+// FINAL_V12_BUILD_INFO
+async function loadBuildInfo() {
+  try {
+    const response = await fetch(
+      `/health?ui=${Date.now()}`,
+      { cache: 'no-store' }
+    );
+
+    if (!response.ok) return;
+
+    const data = await response.json();
+
+    const version = document.getElementById('appVersionLabel');
+
+    if (version) {
+      version.textContent =
+        String(data.ui_version || 'final-v12-ui')
+          .toUpperCase();
+    }
+
+    const count = document.getElementById('contentCount');
+
+    if (
+      count &&
+      Number.isFinite(Number(data.movies))
+    ) {
+      count.textContent = `${Number(data.movies)}+`;
+    }
+
+  } catch (_) {}
+}
