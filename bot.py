@@ -93,7 +93,7 @@ def _run_internal_poster_proxy() -> None:
 
         uvicorn.run(
             poster_proxy_app,
-            host="0.0.0.0",
+            host="::",
             port=int(os.getenv("POSTER_PROXY_PORT", "8080")),
             log_level="warning",
             access_log=False,
