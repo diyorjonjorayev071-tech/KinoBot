@@ -55,7 +55,7 @@ def health() -> dict[str, Any]:
     return {
         "status": "ok",
         "service": "xd-kino-clean",
-        "ui_version": "final-v5",
+        "ui_version": "final-v6",
         **info,
     }
 
@@ -166,7 +166,7 @@ async def poster(code: int) -> Response:
             pass
 
     data = placeholder_svg(name, code)
-    return Response(data, media_type="image/svg+xml", headers={"Cache-Control": "public,max-age=600"})
+    return Response(data, media_type="image/svg+xml", headers={"Cache-Control": "no-store, no-cache, max-age=0"})
 
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
