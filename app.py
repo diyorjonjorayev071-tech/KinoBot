@@ -56,7 +56,7 @@ def health() -> dict[str, Any]:
     return {
         "status": "ok",
         "service": "xd-kino-clean",
-        "ui_version": "final-v10",
+        "ui_version": "final-v11",
         **info,
     }
 
@@ -229,48 +229,26 @@ async def poster(code: int) -> Response:
             .lower()
         )
 
-        # Telegram ba'zan rasmni application/octet-stream
-        # kabi Content-Type bilan qaytarishi mumkin.
-        # Shuning uchun haqiqiy fayl baytlarini tekshiramiz.
+        # Telegram ayrim posterlarni application/octet-stream
+        # ko'rinishida qaytaradi. poster_file_id esa rasmga tegishli,
+        # shuning uchun file_path kengaytmasidan MIME aniqlanadi.
         if (
             not content_type.startswith("image/")
             or "svg" in content_type
         ):
-            if raw.startswith(b"\\xff\\xd8\\xff"):
+            lower_path = file_path.lower()
+
+            if lower_path.endswith((".jpg", ".jpeg")):
                 content_type = "image/jpeg"
-
-            elif raw.startswith(b"\\x89PNG\\r\\n\\x1a\\n"):
+            elif lower_path.endswith(".png"):
                 content_type = "image/png"
-
-            elif (
-                raw.startswith(b"RIFF")
-                and len(raw) >= 12
-                and raw[8:12] == b"WEBP"
-            ):
+            elif lower_path.endswith(".webp"):
                 content_type = "image/webp"
-
-            elif raw.startswith((b"GIF87a", b"GIF89a")):
+            elif lower_path.endswith(".gif"):
                 content_type = "image/gif"
-
             else:
-                lower_path = file_path.lower()
-
-                if lower_path.endswith((".jpg", ".jpeg")):
-                    content_type = "image/jpeg"
-
-                elif lower_path.endswith(".png"):
-                    content_type = "image/png"
-
-                elif lower_path.endswith(".webp"):
-                    content_type = "image/webp"
-
-                elif lower_path.endswith(".gif"):
-                    content_type = "image/gif"
-
-                else:
-                    raise RuntimeError(
-                        "unknown_image_format"
-                    )
+                # Telegram photo fayllari odatda JPEG.
+                content_type = "image/jpeg"
 
         poster_cache[code] = (
             time.time(),
