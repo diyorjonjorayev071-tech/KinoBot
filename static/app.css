@@ -4388,3 +4388,535 @@ body {
 
 }
 
+
+
+/* =========================================================
+   FINAL_V19_CREATIVE_LOGO
+   ========================================================= */
+
+
+/* Asosiy logo container */
+
+.logo-button {
+  position: relative !important;
+
+  width: 132px !important;
+  height: 46px !important;
+
+  flex: 0 0 132px !important;
+
+  display: flex !important;
+  align-items: center !important;
+
+  gap: 10px !important;
+
+  padding: 0 5px !important;
+
+  overflow: visible !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  background: transparent !important;
+
+  box-shadow: none !important;
+
+  isolation: isolate;
+
+  animation: none !important;
+}
+
+
+/* =========================================================
+   ICON
+   ========================================================= */
+
+.logo-play {
+  position: relative !important;
+
+  left: auto !important;
+  top: auto !important;
+
+  width: 34px !important;
+  height: 34px !important;
+
+  flex: 0 0 34px !important;
+
+  display: grid !important;
+  place-items: center !important;
+
+  transform: none !important;
+
+  border-radius: 11px !important;
+
+  color: #071108 !important;
+
+  background:
+    linear-gradient(
+      145deg,
+      #6cff80 0%,
+      #4af268 43%,
+      #27d94a 100%
+    ) !important;
+
+  border:
+    1px solid
+    rgba(255,255,255,.30) !important;
+
+  box-shadow:
+    0 6px 18px
+    rgba(0,0,0,.32),
+
+    0 0 14px
+    rgba(71,244,96,.19),
+
+    inset 0 1px 0
+    rgba(255,255,255,.30) !important;
+
+  filter: none !important;
+
+  z-index: 3;
+
+  animation:
+    xdV19IconFloat
+    3.6s
+    ease-in-out
+    infinite !important;
+}
+
+
+/* Ikonka atrofidagi animated ring */
+
+.logo-play::after {
+  content: "";
+
+  position: absolute;
+
+  inset: -4px;
+
+  border-radius: 14px;
+
+  border:
+    1px solid
+    rgba(92,255,115,.32);
+
+  opacity: .22;
+
+  pointer-events: none;
+
+  animation:
+    xdV19Ring
+    2.8s
+    ease-in-out
+    infinite;
+}
+
+
+/* Ichki yumshoq glow */
+
+.logo-play::before {
+  content: "";
+
+  position: absolute;
+
+  inset: 5px;
+
+  border-radius: 8px;
+
+  background:
+    radial-gradient(
+      circle at 35% 25%,
+      rgba(255,255,255,.35),
+      transparent 55%
+    );
+
+  pointer-events: none;
+}
+
+
+.logo-play svg {
+  position: relative;
+
+  z-index: 3;
+
+  width: 17px !important;
+  height: 17px !important;
+
+  color: #061007 !important;
+
+  fill: currentColor !important;
+  stroke: none !important;
+}
+
+
+/* =========================================================
+   TEXT
+   ========================================================= */
+
+/* V18 yashirgan textni qaytaramiz */
+
+.logo-button > span:last-child {
+  position: relative !important;
+
+  width: auto !important;
+  height: auto !important;
+
+  display: inline-block !important;
+
+  overflow: visible !important;
+
+  clip-path: none !important;
+
+  white-space: nowrap !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  font-family:
+    "Inter",
+    "Segoe UI",
+    Arial,
+    sans-serif !important;
+
+  font-size: 18px !important;
+
+  font-weight: 850 !important;
+
+  line-height: 1 !important;
+
+  letter-spacing: .8px !important;
+
+  background:
+    linear-gradient(
+      100deg,
+      #4cec64 0%,
+      #75ff88 28%,
+      #e7ffe9 49%,
+      #55f56d 70%,
+      #35dc52 100%
+    );
+
+  background-size:
+    230% 100%;
+
+  -webkit-background-clip:
+    text;
+
+  background-clip:
+    text;
+
+  -webkit-text-fill-color:
+    transparent;
+
+  color:
+    transparent !important;
+
+  text-shadow:
+    0 0 18px
+    rgba(75,243,99,.10);
+
+  animation:
+    xdV19TextShimmer
+    4.8s
+    linear
+    infinite;
+}
+
+
+/* xD alohida premium oq */
+
+.logo-button > span:last-child b {
+  display: inline-block;
+
+  margin-right: 5px;
+
+  color:
+    #f6f9f6 !important;
+
+  -webkit-text-fill-color:
+    #f6f9f6 !important;
+
+  font-size:
+    19px !important;
+
+  font-weight:
+    900 !important;
+
+  letter-spacing:
+    -1.2px !important;
+
+  text-shadow:
+    0 0 10px
+    rgba(255,255,255,.08),
+
+    0 0 18px
+    rgba(75,243,99,.11);
+
+  transform:
+    skewX(-5deg);
+
+  transform-origin:
+    center;
+
+  animation:
+    xdV19Monogram
+    4.2s
+    ease-in-out
+    infinite;
+}
+
+
+/* =========================================================
+   ORQA GLOW
+   ========================================================= */
+
+.logo-button::before {
+  content: "" !important;
+
+  position: absolute !important;
+
+  left: -5px !important;
+  top: 50% !important;
+
+  width: 62px !important;
+  height: 52px !important;
+
+  transform:
+    translateY(-50%) !important;
+
+  border-radius:
+    50% !important;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(70,245,96,.11),
+      transparent 68%
+    ) !important;
+
+  filter:
+    blur(8px) !important;
+
+  opacity:
+    .75 !important;
+
+  animation:
+    xdV19Glow
+    3.8s
+    ease-in-out
+    infinite !important;
+
+  pointer-events:
+    none;
+}
+
+
+/* V18 pseudo xD olib tashlanadi.
+   Endi bu dekorativ chiziq bo'ladi */
+
+.logo-button::after {
+  content: "" !important;
+
+  position: absolute !important;
+
+  left: 50px !important;
+  right: 7px !important;
+
+  bottom: 6px !important;
+  top: auto !important;
+
+  width: auto !important;
+  height: 1px !important;
+
+  transform: none !important;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(80,245,104,.15),
+      rgba(80,245,104,.70),
+      transparent
+    ) !important;
+
+  opacity:
+    .48;
+
+  box-shadow:
+    0 0 8px
+    rgba(80,245,104,.20);
+
+  animation:
+    xdV19Underline
+    3.8s
+    ease-in-out
+    infinite;
+}
+
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
+
+@keyframes xdV19IconFloat {
+
+  0%,
+  100% {
+    transform:
+      translateY(0)
+      rotate(0deg);
+  }
+
+  50% {
+    transform:
+      translateY(-2px)
+      rotate(-2deg);
+  }
+}
+
+
+@keyframes xdV19Ring {
+
+  0%,
+  100% {
+    transform:
+      scale(.94);
+
+    opacity:
+      .15;
+  }
+
+  50% {
+    transform:
+      scale(1.08);
+
+    opacity:
+      .48;
+  }
+}
+
+
+@keyframes xdV19TextShimmer {
+
+  0% {
+    background-position:
+      180% 50%;
+  }
+
+  100% {
+    background-position:
+      -40% 50%;
+  }
+}
+
+
+@keyframes xdV19Monogram {
+
+  0%,
+  100% {
+    transform:
+      skewX(-5deg)
+      translateY(0);
+  }
+
+  50% {
+    transform:
+      skewX(-5deg)
+      translateY(-1px);
+  }
+}
+
+
+@keyframes xdV19Glow {
+
+  0%,
+  100% {
+    opacity:
+      .45;
+
+    transform:
+      translateY(-50%)
+      scale(.92);
+  }
+
+  50% {
+    opacity:
+      .85;
+
+    transform:
+      translateY(-50%)
+      scale(1.10);
+  }
+}
+
+
+@keyframes xdV19Underline {
+
+  0%,
+  100% {
+    opacity:
+      .18;
+
+    transform:
+      scaleX(.55);
+  }
+
+  50% {
+    opacity:
+      .70;
+
+    transform:
+      scaleX(1);
+  }
+}
+
+
+/* Click */
+
+.logo-button:active {
+  transform:
+    scale(.97) !important;
+}
+
+
+/* Kichik ekran */
+
+@media (max-width:390px) {
+
+  .logo-button {
+    width:
+      124px !important;
+
+    flex-basis:
+      124px !important;
+  }
+
+  .logo-button > span:last-child {
+    font-size:
+      17px !important;
+  }
+
+  .logo-button > span:last-child b {
+    font-size:
+      18px !important;
+  }
+
+}
+
+
+/* Accessibility */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .logo-play,
+  .logo-play::after,
+  .logo-button > span:last-child,
+  .logo-button > span:last-child b,
+  .logo-button::before,
+  .logo-button::after {
+
+    animation:
+      none !important;
+  }
+}
+
