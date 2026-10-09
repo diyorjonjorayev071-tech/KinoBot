@@ -3,7 +3,7 @@ const tg = window.Telegram?.WebApp || null;
 
 // FINAL_V13_SPLASH_TIMER
 const XD_SPLASH_STARTED_AT = Date.now();
-const XD_SPLASH_MIN_MS = 1850;
+const XD_SPLASH_MIN_MS = 2900;
 
 
 try {
