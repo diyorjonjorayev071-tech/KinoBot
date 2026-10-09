@@ -7032,3 +7032,32 @@ body {
       14px !important;
   }
 }
+
+
+/* =========================================================
+   FINAL_V26_RED_FAVORITE_HEART
+   ========================================================= */
+
+/* Sevimliga qo'shilmagan */
+#modalFavorite:not(.active) .ui-icon path {
+    fill: transparent !important;
+}
+
+/* Sevimliga qo'shilgan */
+#modalFavorite.active .ui-icon path {
+    fill: #ff2d55 !important;
+    stroke: #ff2d55 !important;
+}
+
+/* Yurakning o'ziga yengil premium glow */
+#modalFavorite.active .ui-icon {
+    color: #ff2d55 !important;
+    filter:
+        drop-shadow(0 0 5px rgba(255,45,85,.45))
+        drop-shadow(0 0 10px rgba(255,45,85,.18));
+}
+
+/* Tugma matni hozirgi yashil uslubda qoladi */
+#modalFavorite.active {
+    color: #55ef6c !important;
+}
