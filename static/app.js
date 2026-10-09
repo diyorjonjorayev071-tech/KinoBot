@@ -4327,3 +4327,647 @@ if (document.body) {
     }
   );
 }
+
+
+// ============================================================
+// FINAL_V27_CINEMA_FILTERS
+// Native select -> xD KINO cinematic filter sheet
+// ============================================================
+
+const XD_V27_FILTERS = {
+
+  typeSelect: {
+    kicker: "KONTENT",
+    title: "Nimani ko'ramiz?",
+    options: {
+      "": {
+        label: "Barchasi",
+        hint: "Barcha kontent"
+      },
+      "Kino": {
+        label: "Kino",
+        hint: "To'liq metrajli filmlar"
+      },
+      "Serial": {
+        label: "Serial",
+        hint: "Serial va qismlar"
+      },
+      "Multfilm": {
+        label: "Multfilm",
+        hint: "Animatsion kontent"
+      }
+    }
+  },
+
+  sortSelect: {
+    kicker: "SARALASH",
+    title: "Qanday tartibda?",
+    options: {
+      "popular": {
+        label: "Mashhur",
+        hint: "Ko'p ko'rilganlar"
+      },
+      "new": {
+        label: "Yangi",
+        hint: "Eng so'nggi qo'shilganlar"
+      },
+      "year": {
+        label: "Yil",
+        hint: "Chiqqan yili bo'yicha"
+      },
+      "name": {
+        label: "Nomi",
+        hint: "A dan Z gacha"
+      }
+    }
+  }
+
+};
+
+
+function xdV27ChevronSvg() {
+
+  return `
+    <svg viewBox="0 0 24 24"
+         aria-hidden="true">
+      <path d="M7 9.5 12 14.5 17 9.5"></path>
+    </svg>
+  `;
+}
+
+
+function xdV27FilterIcon(type) {
+
+  if (type === "sortSelect") {
+
+    return `
+      <svg viewBox="0 0 24 24"
+           aria-hidden="true">
+        <path d="M4 7h11"></path>
+        <path d="M4 12h8"></path>
+        <path d="M4 17h5"></path>
+        <path d="m16 14 3 3 3-3"></path>
+        <path d="M19 5v12"></path>
+      </svg>
+    `;
+  }
+
+  return `
+    <svg viewBox="0 0 24 24"
+         aria-hidden="true">
+      <rect x="3.5"
+            y="5"
+            width="17"
+            height="14"
+            rx="3"></rect>
+
+      <path d="M8 5v14"></path>
+      <path d="M16 5v14"></path>
+      <path d="M3.5 9h4.5"></path>
+      <path d="M16 9h4.5"></path>
+      <path d="M3.5 15h4.5"></path>
+      <path d="M16 15h4.5"></path>
+    </svg>
+  `;
+}
+
+
+function xdV27CurrentLabel(
+  select,
+  config
+) {
+
+  return (
+    config.options[
+      select.value
+    ]?.label
+    ||
+    select.options[
+      select.selectedIndex
+    ]?.textContent
+    ||
+    ""
+  );
+}
+
+
+let xdV27Sheet = null;
+
+
+function xdV27CloseSheet() {
+
+  if (!xdV27Sheet) return;
+
+  xdV27Sheet.classList.remove(
+    "show"
+  );
+
+  document.body.classList.remove(
+    "xd-filter-open"
+  );
+
+  setTimeout(() => {
+
+    xdV27Sheet?.remove();
+    xdV27Sheet = null;
+
+  }, 240);
+}
+
+
+function xdV27OpenSheet(
+  select,
+  config,
+  trigger
+) {
+
+  xdV27CloseSheet();
+
+
+  const overlay =
+    document.createElement(
+      "div"
+    );
+
+  overlay.className =
+    "xd-filter-overlay";
+
+
+  const sheet =
+    document.createElement(
+      "div"
+    );
+
+  sheet.className =
+    "xd-filter-sheet";
+
+
+  const handle =
+    document.createElement(
+      "div"
+    );
+
+  handle.className =
+    "xd-filter-handle";
+
+
+  const head =
+    document.createElement(
+      "div"
+    );
+
+  head.className =
+    "xd-filter-sheet-head";
+
+
+  const copy =
+    document.createElement(
+      "div"
+    );
+
+
+  const kicker =
+    document.createElement(
+      "span"
+    );
+
+  kicker.className =
+    "xd-filter-kicker";
+
+  kicker.textContent =
+    config.kicker;
+
+
+  const title =
+    document.createElement(
+      "strong"
+    );
+
+  title.textContent =
+    config.title;
+
+
+  copy.append(
+    kicker,
+    title
+  );
+
+
+  const close =
+    document.createElement(
+      "button"
+    );
+
+  close.type =
+    "button";
+
+  close.className =
+    "xd-filter-close";
+
+  close.setAttribute(
+    "aria-label",
+    "Yopish"
+  );
+
+  close.innerHTML = `
+    <svg viewBox="0 0 24 24"
+         aria-hidden="true">
+      <path d="M6 6 18 18"></path>
+      <path d="M18 6 6 18"></path>
+    </svg>
+  `;
+
+
+  head.append(
+    copy,
+    close
+  );
+
+
+  const grid =
+    document.createElement(
+      "div"
+    );
+
+  grid.className =
+    "xd-filter-grid";
+
+
+  Object.entries(
+    config.options
+  ).forEach(
+    ([value, option], index) => {
+
+      const button =
+        document.createElement(
+          "button"
+        );
+
+      button.type =
+        "button";
+
+      button.className =
+        "xd-filter-option";
+
+      if (
+        String(select.value) ===
+        String(value)
+      ) {
+
+        button.classList.add(
+          "active"
+        );
+      }
+
+
+      const number =
+        document.createElement(
+          "span"
+        );
+
+      number.className =
+        "xd-filter-number";
+
+      number.textContent =
+        String(index + 1)
+          .padStart(2, "0");
+
+
+      const optionTitle =
+        document.createElement(
+          "strong"
+        );
+
+      optionTitle.textContent =
+        option.label;
+
+
+      const hint =
+        document.createElement(
+          "small"
+        );
+
+      hint.textContent =
+        option.hint;
+
+
+      const check =
+        document.createElement(
+          "span"
+        );
+
+      check.className =
+        "xd-filter-check";
+
+      check.innerHTML = `
+        <svg viewBox="0 0 24 24"
+             aria-hidden="true">
+          <path d="m6 12 4 4 8-9"></path>
+        </svg>
+      `;
+
+
+      button.append(
+        number,
+        optionTitle,
+        hint,
+        check
+      );
+
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          select.value =
+            value;
+
+          select.dispatchEvent(
+            new Event(
+              "change",
+              {
+                bubbles: true
+              }
+            )
+          );
+
+
+          const label =
+            trigger.querySelector(
+              ".xd-filter-trigger-label"
+            );
+
+          if (label) {
+            label.textContent =
+              option.label;
+          }
+
+
+          try {
+
+            tg?.HapticFeedback
+              ?.selectionChanged?.();
+
+          } catch (_) {}
+
+
+          xdV27CloseSheet();
+        }
+      );
+
+
+      grid.appendChild(
+        button
+      );
+    }
+  );
+
+
+  sheet.append(
+    handle,
+    head,
+    grid
+  );
+
+
+  overlay.appendChild(
+    sheet
+  );
+
+
+  document.body.appendChild(
+    overlay
+  );
+
+
+  xdV27Sheet =
+    overlay;
+
+
+  requestAnimationFrame(
+    () => {
+
+      overlay.classList.add(
+        "show"
+      );
+
+      document.body.classList.add(
+        "xd-filter-open"
+      );
+    }
+  );
+
+
+  overlay.addEventListener(
+    "click",
+    event => {
+
+      if (
+        event.target === overlay
+      ) {
+
+        xdV27CloseSheet();
+      }
+    }
+  );
+
+
+  close.addEventListener(
+    "click",
+    xdV27CloseSheet
+  );
+}
+
+
+function xdV27EnhanceSelect(
+  selectId
+) {
+
+  const select =
+    document.getElementById(
+      selectId
+    );
+
+  const config =
+    XD_V27_FILTERS[
+      selectId
+    ];
+
+  if (
+    !select ||
+    !config ||
+    select.dataset.xdEnhanced === "1"
+  ) {
+    return;
+  }
+
+
+  const trigger =
+    document.createElement(
+      "button"
+    );
+
+  trigger.type =
+    "button";
+
+  trigger.className =
+    "xd-filter-trigger";
+
+
+  const icon =
+    document.createElement(
+      "span"
+    );
+
+  icon.className =
+    "xd-filter-trigger-icon";
+
+  icon.innerHTML =
+    xdV27FilterIcon(
+      selectId
+    );
+
+
+  const content =
+    document.createElement(
+      "span"
+    );
+
+  content.className =
+    "xd-filter-trigger-content";
+
+
+  const eyebrow =
+    document.createElement(
+      "small"
+    );
+
+  eyebrow.textContent =
+    config.kicker;
+
+
+  const label =
+    document.createElement(
+      "strong"
+    );
+
+  label.className =
+    "xd-filter-trigger-label";
+
+  label.textContent =
+    xdV27CurrentLabel(
+      select,
+      config
+    );
+
+
+  content.append(
+    eyebrow,
+    label
+  );
+
+
+  const chevron =
+    document.createElement(
+      "span"
+    );
+
+  chevron.className =
+    "xd-filter-chevron";
+
+  chevron.innerHTML =
+    xdV27ChevronSvg();
+
+
+  trigger.append(
+    icon,
+    content,
+    chevron
+  );
+
+
+  select.insertAdjacentElement(
+    "afterend",
+    trigger
+  );
+
+
+  select.classList.add(
+    "xd-native-select"
+  );
+
+  select.dataset.xdEnhanced =
+    "1";
+
+
+  trigger.addEventListener(
+    "click",
+    () => {
+
+      xdV27OpenSheet(
+        select,
+        config,
+        trigger
+      );
+    }
+  );
+
+
+  select.addEventListener(
+    "change",
+    () => {
+
+      label.textContent =
+        xdV27CurrentLabel(
+          select,
+          config
+        );
+    }
+  );
+}
+
+
+function xdV27StartFilters() {
+
+  xdV27EnhanceSelect(
+    "typeSelect"
+  );
+
+  xdV27EnhanceSelect(
+    "sortSelect"
+  );
+}
+
+
+if (
+  document.readyState ===
+  "loading"
+) {
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    xdV27StartFilters,
+    {
+      once: true
+    }
+  );
+
+} else {
+
+  xdV27StartFilters();
+}
+
+
+document.addEventListener(
+  "keydown",
+  event => {
+
+    if (
+      event.key === "Escape" &&
+      xdV27Sheet
+    ) {
+
+      xdV27CloseSheet();
+    }
+  }
+);

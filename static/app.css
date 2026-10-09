@@ -7061,3 +7061,959 @@ body {
 #modalFavorite.active {
     color: #55ef6c !important;
 }
+
+
+/* =========================================================
+   FINAL_V27_CINEMA_FILTERS
+   ========================================================= */
+
+
+/* Native select faqat JS muvaffaqiyatli ishga tushganda yashiriladi */
+
+select.xd-native-select {
+  position: absolute !important;
+
+  width: 1px !important;
+  height: 1px !important;
+
+  opacity: 0 !important;
+
+  pointer-events: none !important;
+
+  overflow: hidden !important;
+}
+
+
+.filter-row {
+  display: grid !important;
+
+  grid-template-columns:
+    1fr 1fr !important;
+
+  gap: 10px !important;
+}
+
+
+/* =========================================================
+   TRIGGER BUTTON
+   ========================================================= */
+
+.xd-filter-trigger {
+
+  position: relative;
+
+  min-width: 0;
+
+  height: 62px;
+
+  display: grid;
+
+  grid-template-columns:
+    38px
+    minmax(0,1fr)
+    22px;
+
+  align-items: center;
+
+  gap: 9px;
+
+  padding:
+    8px 11px;
+
+  border:
+    1px solid
+    rgba(255,255,255,.075);
+
+  border-radius:
+    18px;
+
+  color:
+    #f4f7f4;
+
+  background:
+
+    radial-gradient(
+      circle at 12% 20%,
+      rgba(80,247,104,.08),
+      transparent 38%
+    ),
+
+    linear-gradient(
+      145deg,
+      rgba(14,22,15,.96),
+      rgba(6,10,7,.98)
+    );
+
+  box-shadow:
+
+    0 9px 28px
+    rgba(0,0,0,.22),
+
+    inset 0 1px 0
+    rgba(255,255,255,.035);
+
+  text-align: left;
+
+  -webkit-tap-highlight-color:
+    transparent;
+
+  transition:
+    transform .18s ease,
+    border-color .18s ease,
+    background .18s ease;
+}
+
+
+.xd-filter-trigger:active {
+
+  transform:
+    scale(.975);
+
+  border-color:
+    rgba(82,245,107,.27);
+}
+
+
+/* icon */
+
+.xd-filter-trigger-icon {
+
+  width: 38px;
+  height: 38px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius:
+    12px;
+
+  color:
+    #67f77d;
+
+  background:
+
+    linear-gradient(
+      145deg,
+      rgba(69,244,95,.13),
+      rgba(69,244,95,.035)
+    );
+
+  border:
+    1px solid
+    rgba(80,246,106,.12);
+
+  box-shadow:
+
+    inset 0 1px 0
+    rgba(255,255,255,.035),
+
+    0 0 15px
+    rgba(68,240,95,.035);
+}
+
+
+.xd-filter-trigger-icon svg {
+
+  width: 20px;
+  height: 20px;
+
+  fill: none;
+
+  stroke:
+    currentColor;
+
+  stroke-width:
+    1.7;
+
+  stroke-linecap:
+    round;
+
+  stroke-linejoin:
+    round;
+}
+
+
+/* text */
+
+.xd-filter-trigger-content {
+
+  min-width: 0;
+
+  display: flex;
+
+  flex-direction:
+    column;
+
+  gap: 3px;
+}
+
+
+.xd-filter-trigger-content small {
+
+  color:
+    rgba(104,246,126,.64);
+
+  font-size:
+    7px;
+
+  font-weight:
+    750;
+
+  letter-spacing:
+    1.25px;
+}
+
+
+.xd-filter-trigger-content strong {
+
+  overflow:
+    hidden;
+
+  color:
+    #f3f6f3;
+
+  font-size:
+    13px;
+
+  font-weight:
+    720;
+
+  white-space:
+    nowrap;
+
+  text-overflow:
+    ellipsis;
+}
+
+
+.xd-filter-chevron {
+
+  display: grid;
+  place-items: center;
+
+  color:
+    rgba(255,255,255,.47);
+}
+
+
+.xd-filter-chevron svg {
+
+  width:
+    18px;
+
+  height:
+    18px;
+
+  fill:
+    none;
+
+  stroke:
+    currentColor;
+
+  stroke-width:
+    1.8;
+
+  stroke-linecap:
+    round;
+
+  stroke-linejoin:
+    round;
+}
+
+
+/* =========================================================
+   OVERLAY
+   ========================================================= */
+
+.xd-filter-overlay {
+
+  position:
+    fixed;
+
+  z-index:
+    99999;
+
+  inset:
+    0;
+
+  display:
+    flex;
+
+  align-items:
+    flex-end;
+
+  padding:
+    0;
+
+  opacity:
+    0;
+
+  visibility:
+    hidden;
+
+  background:
+    rgba(0,0,0,.68);
+
+  backdrop-filter:
+    blur(9px);
+
+  -webkit-backdrop-filter:
+    blur(9px);
+
+  transition:
+    opacity .22s ease,
+    visibility .22s ease;
+}
+
+
+.xd-filter-overlay.show {
+
+  opacity:
+    1;
+
+  visibility:
+    visible;
+}
+
+
+/* =========================================================
+   SHEET
+   ========================================================= */
+
+.xd-filter-sheet {
+
+  position:
+    relative;
+
+  width:
+    100%;
+
+  padding:
+
+    10px 18px
+    calc(
+      20px +
+      env(safe-area-inset-bottom,0px)
+    );
+
+  overflow:
+    hidden;
+
+  border-radius:
+    28px 28px 0 0;
+
+  border:
+    1px solid
+    rgba(255,255,255,.075);
+
+  border-bottom:
+    0;
+
+  background:
+
+    radial-gradient(
+      ellipse at 16% 0%,
+      rgba(59,238,86,.105),
+      transparent 34%
+    ),
+
+    radial-gradient(
+      ellipse at 90% 35%,
+      rgba(29,116,44,.07),
+      transparent 36%
+    ),
+
+    linear-gradient(
+      180deg,
+      #0c120d 0%,
+      #060906 100%
+    );
+
+  box-shadow:
+
+    0 -22px 70px
+    rgba(0,0,0,.66),
+
+    inset 0 1px 0
+    rgba(255,255,255,.045);
+
+  transform:
+    translateY(105%);
+
+  transition:
+    transform .28s
+    cubic-bezier(.22,.85,.31,1);
+}
+
+
+.xd-filter-overlay.show
+.xd-filter-sheet {
+
+  transform:
+    translateY(0);
+}
+
+
+/* subtle cinematic line */
+
+.xd-filter-sheet::before {
+
+  content: "";
+
+  position:
+    absolute;
+
+  left:
+    -20%;
+
+  top:
+    118px;
+
+  width:
+    140%;
+
+  height:
+    1px;
+
+  opacity:
+    .22;
+
+  background:
+
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(80,244,103,.52),
+      transparent
+    );
+
+  box-shadow:
+    0 0 16px
+    rgba(80,244,103,.18);
+
+  transform:
+    rotate(-7deg);
+
+  pointer-events:
+    none;
+}
+
+
+.xd-filter-handle {
+
+  width:
+    38px;
+
+  height:
+    4px;
+
+  margin:
+    1px auto 16px;
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(255,255,255,.19);
+}
+
+
+/* =========================================================
+   SHEET HEADER
+   ========================================================= */
+
+.xd-filter-sheet-head {
+
+  display:
+    flex;
+
+  justify-content:
+    space-between;
+
+  align-items:
+    center;
+
+  margin-bottom:
+    17px;
+}
+
+
+.xd-filter-sheet-head > div {
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    4px;
+}
+
+
+.xd-filter-kicker {
+
+  color:
+    #62ef78;
+
+  font-size:
+    8px;
+
+  font-weight:
+    800;
+
+  letter-spacing:
+    1.8px;
+}
+
+
+.xd-filter-sheet-head strong {
+
+  color:
+    #f6f8f6;
+
+  font-size:
+    23px;
+
+  font-weight:
+    740;
+
+  letter-spacing:
+    -.55px;
+}
+
+
+.xd-filter-close {
+
+  width:
+    40px;
+
+  height:
+    40px;
+
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  border:
+    1px solid
+    rgba(255,255,255,.08);
+
+  border-radius:
+    50%;
+
+  color:
+    #d9deda;
+
+  background:
+    rgba(255,255,255,.045);
+}
+
+
+.xd-filter-close svg {
+
+  width:
+    19px;
+
+  height:
+    19px;
+
+  fill:
+    none;
+
+  stroke:
+    currentColor;
+
+  stroke-width:
+    1.7;
+
+  stroke-linecap:
+    round;
+}
+
+
+/* =========================================================
+   2 x 2 OPTIONS
+   ========================================================= */
+
+.xd-filter-grid {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  gap:
+    10px;
+}
+
+
+.xd-filter-option {
+
+  position:
+    relative;
+
+  min-height:
+    92px;
+
+  overflow:
+    hidden;
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  align-items:
+    flex-start;
+
+  justify-content:
+    flex-end;
+
+  padding:
+    14px;
+
+  border:
+    1px solid
+    rgba(255,255,255,.07);
+
+  border-radius:
+    18px;
+
+  color:
+    #f4f7f4;
+
+  text-align:
+    left;
+
+  background:
+
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(79,242,101,.06),
+      transparent 40%
+    ),
+
+    linear-gradient(
+      145deg,
+      rgba(18,25,19,.96),
+      rgba(8,12,9,.98)
+    );
+
+  box-shadow:
+
+    inset 0 1px 0
+    rgba(255,255,255,.03),
+
+    0 8px 22px
+    rgba(0,0,0,.16);
+
+  -webkit-tap-highlight-color:
+    transparent;
+
+  transition:
+    transform .16s ease,
+    border-color .18s ease,
+    background .18s ease;
+}
+
+
+.xd-filter-option:active {
+
+  transform:
+    scale(.97);
+}
+
+
+.xd-filter-number {
+
+  position:
+    absolute;
+
+  left:
+    14px;
+
+  top:
+    11px;
+
+  color:
+    rgba(255,255,255,.20);
+
+  font-size:
+    8px;
+
+  font-weight:
+    800;
+
+  letter-spacing:
+    1.2px;
+}
+
+
+.xd-filter-option strong {
+
+  color:
+    #f5f7f5;
+
+  font-size:
+    15px;
+
+  font-weight:
+    760;
+}
+
+
+.xd-filter-option small {
+
+  margin-top:
+    4px;
+
+  max-width:
+    calc(100% - 8px);
+
+  overflow:
+    hidden;
+
+  color:
+    rgba(214,222,216,.48);
+
+  font-size:
+    9px;
+
+  line-height:
+    1.25;
+
+  white-space:
+    nowrap;
+
+  text-overflow:
+    ellipsis;
+}
+
+
+/* check circle */
+
+.xd-filter-check {
+
+  position:
+    absolute;
+
+  right:
+    11px;
+
+  top:
+    10px;
+
+  width:
+    23px;
+
+  height:
+    23px;
+
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  border:
+    1px solid
+    rgba(255,255,255,.10);
+
+  border-radius:
+    50%;
+
+  color:
+    transparent;
+
+  background:
+    rgba(255,255,255,.025);
+}
+
+
+.xd-filter-check svg {
+
+  width:
+    13px;
+
+  height:
+    13px;
+
+  fill:
+    none;
+
+  stroke:
+    currentColor;
+
+  stroke-width:
+    2.2;
+
+  stroke-linecap:
+    round;
+
+  stroke-linejoin:
+    round;
+}
+
+
+/* =========================================================
+   ACTIVE OPTION
+   ========================================================= */
+
+.xd-filter-option.active {
+
+  border-color:
+    rgba(84,247,107,.44);
+
+  background:
+
+    radial-gradient(
+      circle at 85% 10%,
+      rgba(91,255,115,.16),
+      transparent 43%
+    ),
+
+    linear-gradient(
+      145deg,
+      rgba(19,43,24,.98),
+      rgba(7,15,9,.99)
+    );
+
+  box-shadow:
+
+    inset 0 1px 0
+    rgba(255,255,255,.045),
+
+    0 0 0 1px
+    rgba(69,235,93,.045),
+
+    0 9px 27px
+    rgba(0,0,0,.22),
+
+    0 0 22px
+    rgba(62,232,88,.055);
+}
+
+
+.xd-filter-option.active
+.xd-filter-number {
+
+  color:
+    rgba(104,255,126,.58);
+}
+
+
+.xd-filter-option.active
+.xd-filter-check {
+
+  color:
+    #061108;
+
+  border-color:
+    #59ef70;
+
+  background:
+    #59ef70;
+
+  box-shadow:
+    0 0 13px
+    rgba(80,241,104,.25);
+}
+
+
+.xd-filter-option.active strong {
+
+  color:
+    #72f786;
+}
+
+
+/* Body scroll */
+
+body.xd-filter-open {
+
+  overflow:
+    hidden !important;
+}
+
+
+/* Small phones */
+
+@media (max-width:390px) {
+
+  .xd-filter-trigger {
+
+    height:
+      58px;
+
+    grid-template-columns:
+      34px
+      minmax(0,1fr)
+      18px;
+
+    padding:
+      7px 9px;
+  }
+
+
+  .xd-filter-trigger-icon {
+
+    width:
+      34px;
+
+    height:
+      34px;
+
+    border-radius:
+      11px;
+  }
+
+
+  .xd-filter-trigger-content strong {
+
+    font-size:
+      12px;
+  }
+
+
+  .xd-filter-sheet {
+
+    padding-left:
+      14px;
+
+    padding-right:
+      14px;
+  }
+
+
+  .xd-filter-option {
+
+    min-height:
+      88px;
+
+    padding:
+      12px;
+  }
+}
+
+
+/* Reduced motion */
+
+@media (
+  prefers-reduced-motion:
+  reduce
+) {
+
+  .xd-filter-overlay,
+  .xd-filter-sheet,
+  .xd-filter-trigger,
+  .xd-filter-option {
+
+    transition:
+      none !important;
+  }
+}
