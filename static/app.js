@@ -3863,3 +3863,467 @@ setTimeout(
   },
   20
 );
+
+
+// ============================================================
+// FINAL_V24_PHOTO_GENRES
+// Reference-style cinematic photo genre cards
+// ============================================================
+
+let xdV24CataloguePromise = null;
+
+const xdV24UsedMovies =
+  new Set();
+
+
+function xdV24Norm(value) {
+
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[????`?]/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+
+function xdV24Score(movie) {
+
+  const imdb =
+    imdbNumber(movie?.imdb);
+
+  const views =
+    viewsNumber(movie?.views);
+
+  return (
+    imdb * 1000000 +
+    Math.min(
+      views,
+      999999
+    )
+  );
+}
+
+
+async function xdV24Catalogue() {
+
+  if (!xdV24CataloguePromise) {
+
+    xdV24CataloguePromise =
+      api(
+        '/api/movies?sort=popular&limit=100'
+      )
+      .then(payload => itemsFrom(payload))
+      .catch(() => []);
+  }
+
+  return xdV24CataloguePromise;
+}
+
+
+function xdV24MatchesGenre(
+  movie,
+  genre
+) {
+
+  const wanted =
+    xdV24Norm(genre);
+
+  const movieGenres =
+    xdV24Norm(
+      movie?.genre || ''
+    );
+
+  if (!wanted || !movieGenres) {
+    return false;
+  }
+
+
+  // Exact / substring match
+  if (
+    movieGenres.includes(wanted) ||
+    wanted.includes(movieGenres)
+  ) {
+    return true;
+  }
+
+
+  // Uzbek/Russian/English yaqin nomlar
+  const aliases = {
+
+    "jangari": [
+      "action",
+      "jangari"
+    ],
+
+    "detektiv": [
+      "detective",
+      "detektiv"
+    ],
+
+    "kriminal": [
+      "crime",
+      "kriminal"
+    ],
+
+    "qo'rqinchli": [
+      "horror",
+      "qo'rqinchli",
+      "dahshat"
+    ],
+
+    "harbiy": [
+      "war",
+      "harbiy",
+      "urush"
+    ],
+
+    "triller": [
+      "thriller",
+      "triller"
+    ],
+
+    "sarguzasht": [
+      "adventure",
+      "sarguzasht"
+    ],
+
+    "melodrama": [
+      "melodrama",
+      "romantika",
+      "drama"
+    ],
+
+    "drama": [
+      "drama"
+    ],
+
+    "komediya": [
+      "comedy",
+      "komediya"
+    ],
+
+    "sport": [
+      "sport"
+    ],
+
+    "western": [
+      "western",
+      "vestern"
+    ],
+
+    "fantastika": [
+      "fantastika",
+      "fantasy"
+    ],
+
+    "fentezi": [
+      "fantasy",
+      "fentezi"
+    ],
+
+    "ilmiy-fantastika": [
+      "science fiction",
+      "sci-fi",
+      "ilmiy fantastika",
+      "fantastika"
+    ],
+
+    "tarixiy": [
+      "history",
+      "historical",
+      "tarixiy"
+    ],
+
+    "biografik": [
+      "biography",
+      "biografik"
+    ],
+
+    "biografiya": [
+      "biography",
+      "biografik"
+    ],
+
+    "hujjatli": [
+      "documentary",
+      "hujjatli"
+    ],
+
+    "romantika": [
+      "romance",
+      "romantika"
+    ],
+
+    "anime": [
+      "anime"
+    ],
+
+    "animatsion": [
+      "animation",
+      "animatsion",
+      "multfilm"
+    ],
+
+    "musiqiy": [
+      "music",
+      "musical",
+      "musiqiy"
+    ],
+
+    "oilaviy": [
+      "family",
+      "oilaviy"
+    ]
+  };
+
+
+  const words =
+    aliases[wanted] || [wanted];
+
+
+  return words.some(
+    word =>
+      movieGenres.includes(
+        xdV24Norm(word)
+      )
+  );
+}
+
+
+async function xdV24Candidates(
+  genre
+) {
+
+  const catalogue =
+    await xdV24Catalogue();
+
+
+  let candidates =
+    catalogue
+      .filter(
+        movie =>
+          xdV24MatchesGenre(
+            movie,
+            genre
+          )
+      );
+
+
+  // 100 ta mashhur kino ichida topilmasa
+  // aynan shu janrni serverdan qidiramiz.
+
+  if (!candidates.length) {
+
+    try {
+
+      const params =
+        new URLSearchParams({
+          genre,
+          sort: 'popular',
+          limit: '20'
+        });
+
+
+      const payload =
+        await api(
+          `/api/movies?${params.toString()}`
+        );
+
+
+      candidates =
+        itemsFrom(payload);
+
+    }
+    catch (_) {
+
+      candidates = [];
+    }
+  }
+
+
+  return candidates
+    .filter(
+      movie =>
+        movie &&
+        movie.code != null
+    )
+    .sort(
+      (a,b) =>
+        xdV24Score(b) -
+        xdV24Score(a)
+    );
+}
+
+
+async function xdLoadGenrePoster(
+  card
+) {
+
+  if (!card) return;
+
+
+  if (
+    card.dataset.v24Photo ===
+    'ready'
+  ) {
+    return;
+  }
+
+
+  if (
+    card.dataset.v24Photo ===
+    'loading'
+  ) {
+    return;
+  }
+
+
+  card.dataset.v24Photo =
+    'loading';
+
+
+  const genre =
+    card.dataset.genre || '';
+
+
+  const candidates =
+    await xdV24Candidates(
+      genre
+    );
+
+
+  if (!candidates.length) {
+
+    card.dataset.v24Photo =
+      'fallback';
+
+    card.classList.add(
+      'v24-photo-genre'
+    );
+
+    return;
+  }
+
+
+  // Bir xil kino iloji boricha
+  // bir nechta janrda takrorlanmasin.
+
+  const movie =
+    candidates.find(
+      item =>
+        !xdV24UsedMovies.has(
+          Number(item.code)
+        )
+    )
+    ||
+    candidates[0];
+
+
+  const code =
+    Number(movie.code);
+
+
+  xdV24UsedMovies.add(code);
+
+
+  const imageUrl =
+    posterUrl(code);
+
+
+  // Avval rasmni tekshiramiz.
+  // Faqat yuklangandan keyin kartaga qo'yiladi.
+
+  const preload =
+    new Image();
+
+
+  preload.onload = () => {
+
+    card.style.setProperty(
+      '--genre-photo',
+      `url("${imageUrl}")`
+    );
+
+
+    card.dataset.v24Photo =
+      'ready';
+
+
+    card.classList.add(
+      'v24-photo-genre'
+    );
+  };
+
+
+  preload.onerror = () => {
+
+    card.dataset.v24Photo =
+      'fallback';
+
+
+    card.classList.add(
+      'v24-photo-genre'
+    );
+  };
+
+
+  preload.src =
+    imageUrl;
+}
+
+
+function xdV24ApplyGenres() {
+
+  const cards =
+    document.querySelectorAll(
+      '.genre-card[data-genre]'
+    );
+
+
+  cards.forEach(
+    card => {
+
+      card.classList.add(
+        'v24-photo-genre'
+      );
+
+      xdLoadGenrePoster(
+        card
+      );
+    }
+  );
+}
+
+
+setTimeout(
+  xdV24ApplyGenres,
+  40
+);
+
+
+const xdV24Observer =
+  new MutationObserver(() => {
+
+    clearTimeout(
+      xdV24Observer.timer
+    );
+
+
+    xdV24Observer.timer =
+      setTimeout(
+        xdV24ApplyGenres,
+        40
+      );
+  });
+
+
+if (document.body) {
+
+  xdV24Observer.observe(
+    document.body,
+    {
+      childList: true,
+      subtree: true
+    }
+  );
+}
