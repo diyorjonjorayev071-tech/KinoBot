@@ -24,6 +24,189 @@ const state = {
 };
 
 
+
+// FINAL_V17_SAFE_UZBEK_TEXT
+
+function normalizeUzbekDisplayText(value = "") {
+
+  return String(value ?? "")
+
+    // Curly / special apostrophes
+    .replace(/[????`?]/g, "'")
+
+    // Encoding buzilgan apostroflar:
+    // ko?rish     -> ko'rish
+    // O?zbek      -> O'zbek
+    // qo?shilgan  -> qo'shilgan
+    // to?g?ri     -> to'g'ri
+    // g?alaba     -> g'alaba
+    .replace(
+      /([oOgG])(?:\?|\uFFFD)(?=[A-Za-z?-?])/g,
+      "$1'"
+    );
+}
+
+
+function repairUzbekVisibleText(root = document.body) {
+
+  if (!root) return;
+
+  // Matn tugunlari
+  const walker = document.createTreeWalker(
+    root,
+    NodeFilter.SHOW_TEXT
+  );
+
+  const nodes = [];
+
+  while (walker.nextNode()) {
+    nodes.push(walker.currentNode);
+  }
+
+  for (const node of nodes) {
+
+    const before = node.nodeValue || "";
+    const after = normalizeUzbekDisplayText(before);
+
+    if (before !== after) {
+      node.nodeValue = after;
+    }
+  }
+
+
+  // Input placeholder, title, aria-label
+  const elements = [];
+
+  if (
+    root.nodeType === Node.ELEMENT_NODE &&
+    root.matches?.(
+      "[placeholder],[title],[aria-label]"
+    )
+  ) {
+    elements.push(root);
+  }
+
+  if (root.querySelectorAll) {
+    elements.push(
+      ...root.querySelectorAll(
+        "[placeholder],[title],[aria-label]"
+      )
+    );
+  }
+
+  for (const el of elements) {
+
+    for (const attr of [
+      "placeholder",
+      "title",
+      "aria-label"
+    ]) {
+
+      if (!el.hasAttribute(attr)) continue;
+
+      const before =
+        el.getAttribute(attr) || "";
+
+      const after =
+        normalizeUzbekDisplayText(before);
+
+      if (before !== after) {
+        el.setAttribute(attr, after);
+      }
+    }
+  }
+}
+
+
+const xdUzbekTextObserver =
+  new MutationObserver(records => {
+
+    for (const record of records) {
+
+      if (
+        record.type === "characterData"
+      ) {
+
+        const node = record.target;
+
+        const before =
+          node.nodeValue || "";
+
+        const after =
+          normalizeUzbekDisplayText(before);
+
+        if (before !== after) {
+          node.nodeValue = after;
+        }
+
+        continue;
+      }
+
+
+      for (const added of record.addedNodes) {
+
+        if (
+          added.nodeType === Node.TEXT_NODE
+        ) {
+
+          const before =
+            added.nodeValue || "";
+
+          const after =
+            normalizeUzbekDisplayText(before);
+
+          if (before !== after) {
+            added.nodeValue = after;
+          }
+
+        }
+
+        else if (
+          added.nodeType === Node.ELEMENT_NODE
+        ) {
+
+          repairUzbekVisibleText(added);
+        }
+      }
+    }
+  });
+
+
+function startUzbekTextRepair() {
+
+  if (!document.body) return;
+
+  repairUzbekVisibleText(
+    document.body
+  );
+
+  xdUzbekTextObserver.observe(
+    document.body,
+    {
+      childList: true,
+      subtree: true,
+      characterData: true
+    }
+  );
+}
+
+
+if (
+  document.readyState === "loading"
+) {
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    startUzbekTextRepair,
+    { once: true }
+  );
+
+} else {
+
+  startUzbekTextRepair();
+}
+
+
 const $ = (selector, root=document) => root.querySelector(selector);
 const $$ = (selector, root=document) => [...root.querySelectorAll(selector)];
 
