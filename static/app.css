@@ -4113,3 +4113,26 @@ body {
   }
 
 }
+
+
+/* FINAL_V16_HERO_TRANSITION */
+
+.hero-backdrop,
+.hero-content {
+  transition:
+    opacity .34s ease,
+    transform .42s ease,
+    filter .34s ease;
+}
+
+.hero.hero-changing .hero-backdrop {
+  opacity: .42;
+  filter: brightness(.78);
+  transform: scale(1.018);
+}
+
+.hero.hero-changing .hero-content {
+  opacity: .25;
+  transform: translateY(7px);
+}
+

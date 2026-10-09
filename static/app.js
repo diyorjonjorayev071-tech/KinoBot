@@ -284,6 +284,140 @@ function collectHomeMovies() {
 }
 
 
+
+// FINAL_V16_HERO_CAROUSEL
+let heroSlides = [];
+let heroSlideIndex = 0;
+let heroSlideTimer = null;
+let heroChangeLock = false;
+
+function showHeroSlide(index, animate = true) {
+
+  if (!heroSlides.length || heroChangeLock) return;
+
+  const nextIndex =
+    (index + heroSlides.length) %
+    heroSlides.length;
+
+  const item =
+    heroSlides[nextIndex];
+
+  if (!item) return;
+
+  const applySlide = () => {
+
+    heroSlideIndex = nextIndex;
+
+    const hero = $('#hero');
+
+    if (!hero || !animate) {
+      setHero(item);
+      return;
+    }
+
+    heroChangeLock = true;
+    hero.classList.add('hero-changing');
+
+    setTimeout(() => {
+
+      setHero(item);
+
+      requestAnimationFrame(() => {
+
+        hero.classList.remove('hero-changing');
+
+        setTimeout(() => {
+          heroChangeLock = false;
+        }, 350);
+
+      });
+
+    }, 170);
+  };
+
+
+  // Keyingi posterni oldindan yuklaymiz:
+  // almashishda qora flash bo'lmasin.
+  const image = new Image();
+  let finished = false;
+
+  const finish = () => {
+
+    if (finished) return;
+    finished = true;
+
+    applySlide();
+  };
+
+  image.onload = finish;
+  image.onerror = finish;
+  image.src = posterUrl(item.code);
+
+  setTimeout(finish, 900);
+}
+
+
+function startHeroCarousel(items) {
+
+  clearInterval(heroSlideTimer);
+
+  heroSlides =
+    uniqueMovies(items || [])
+      .filter(
+        item =>
+          item &&
+          item.code != null
+      )
+      .slice(0, 10);
+
+  if (!heroSlides.length) return;
+
+  heroSlideIndex = 0;
+
+  showHeroSlide(0, false);
+
+  if (heroSlides.length < 2) return;
+
+  heroSlideTimer =
+    setInterval(() => {
+
+      if (document.hidden) return;
+
+      showHeroSlide(
+        heroSlideIndex + 1,
+        true
+      );
+
+    }, 5200);
+}
+
+
+document.addEventListener(
+  'visibilitychange',
+  () => {
+
+    if (document.hidden) return;
+
+    if (heroSlides.length > 1) {
+
+      clearInterval(heroSlideTimer);
+
+      heroSlideTimer =
+        setInterval(() => {
+
+          if (!document.hidden) {
+            showHeroSlide(
+              heroSlideIndex + 1,
+              true
+            );
+          }
+
+        }, 5200);
+    }
+  }
+);
+
+
 function setHero(item) {
 
   if (!item) return;
@@ -590,9 +724,17 @@ async function loadHome() {
       home?.popular?.[0] ||
       home?.new?.[0];
 
-    if (hero) {
-      setHero(hero);
-    }
+    const heroCarouselItems =
+      uniqueMovies([
+        hero,
+        ...recommendations,
+        ...(home?.featured || []),
+        ...(home?.popular || []),
+        ...(home?.new || [])
+      ])
+      .filter(Boolean);
+
+    startHeroCarousel(heroCarouselItems);
 
     renderRecommendations(recommendations);
 
