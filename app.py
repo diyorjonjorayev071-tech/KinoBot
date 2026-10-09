@@ -8,7 +8,7 @@ from typing import Any
 
 import httpx
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
@@ -56,7 +56,7 @@ def health() -> dict[str, Any]:
     return {
         "status": "ok",
         "service": "xd-kino-clean",
-        "ui_version": "final-v24-photo-genres",
+        "ui_version": "final-v25-favorites-fix",
         **info,
     }
 
@@ -132,6 +132,112 @@ def placeholder_svg(name: str, code: int) -> bytes:
     <text x="300" y="640" text-anchor="middle" font-family="Arial,sans-serif" font-size="24" fill="#7e8a80">xD KINO • {code}</text>
     </svg>"""
     return svg.encode("utf-8")
+
+
+
+# ============================================================
+# FINAL_V25_FAVORITES_PROXY
+# ============================================================
+
+FAVORITES_BACKEND = (
+    os.getenv(
+        "FAVORITES_BACKEND",
+        "https://superapp-production-c942.up.railway.app",
+    )
+    .strip()
+    .rstrip("/")
+)
+
+
+async def _favorites_proxy(request: Request) -> Response:
+
+    init_data = (
+        request.headers
+        .get("X-Telegram-Init-Data", "")
+        .strip()
+    )
+
+    if not init_data:
+        return Response(
+            content='{"detail":"Telegram initData yoq."}',
+            status_code=401,
+            media_type="application/json",
+        )
+
+    headers = {
+        "X-Telegram-Init-Data": init_data,
+    }
+
+    body = None
+
+    if request.method == "POST":
+        body = await request.body()
+
+        headers["Content-Type"] = (
+            request.headers.get(
+                "Content-Type",
+                "application/json",
+            )
+        )
+
+    try:
+
+        async with httpx.AsyncClient(
+            timeout=20,
+            follow_redirects=True,
+        ) as client:
+
+            upstream = await client.request(
+                request.method,
+                f"{FAVORITES_BACKEND}/api/favorites",
+                headers=headers,
+                content=body,
+            )
+
+        content_type = (
+            upstream.headers
+            .get(
+                "content-type",
+                "application/json",
+            )
+            .split(";")[0]
+            .strip()
+        )
+
+        return Response(
+            content=upstream.content,
+            status_code=upstream.status_code,
+            media_type=content_type,
+            headers={
+                "Cache-Control": "no-store",
+                "X-Favorites-Source": "proxy",
+            },
+        )
+
+    except Exception as exc:
+
+        return Response(
+            content=(
+                '{"detail":"Favorites backend vaqtincha javob bermadi."}'
+            ),
+            status_code=502,
+            media_type="application/json",
+            headers={
+                "Cache-Control": "no-store",
+                "X-Favorites-Error": type(exc).__name__,
+            },
+        )
+
+
+@app.get("/api/favorites")
+async def favorites_get(request: Request) -> Response:
+    return await _favorites_proxy(request)
+
+
+@app.post("/api/favorites")
+async def favorites_post(request: Request) -> Response:
+    return await _favorites_proxy(request)
+
 
 
 @app.get("/api/poster/{code}")
