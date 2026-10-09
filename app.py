@@ -56,7 +56,7 @@ def health() -> dict[str, Any]:
     return {
         "status": "ok",
         "service": "xd-kino-clean",
-        "ui_version": "final-v17-safe-text",
+        "ui_version": "final-v18-tv-logo",
         **info,
     }
 

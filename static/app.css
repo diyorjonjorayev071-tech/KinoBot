@@ -4136,3 +4136,255 @@ body {
   transform: translateY(7px);
 }
 
+
+
+/* =========================================================
+   FINAL_V18_TV_LOGO
+   ========================================================= */
+
+.logo-button {
+  position: relative !important;
+
+  width: 78px !important;
+  height: 42px !important;
+
+  flex: 0 0 78px !important;
+
+  display: flex !important;
+  align-items: center !important;
+
+  padding: 0 !important;
+
+  overflow: hidden !important;
+
+  border-radius: 14px !important;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(16,24,17,.98),
+      rgba(4,9,5,.98)
+    ) !important;
+
+  border:
+    1px solid
+    rgba(84,247,107,.22) !important;
+
+  box-shadow:
+    0 8px 26px rgba(0,0,0,.34),
+    inset 0 1px 0 rgba(255,255,255,.05),
+    0 0 18px rgba(72,242,96,.06) !important;
+
+  isolation: isolate;
+
+  animation:
+    xdLogoBreath
+    4.4s
+    ease-in-out
+    infinite;
+}
+
+
+/* Eski xD KINO yozuvini yashiramiz */
+.logo-button > span:last-child {
+  position: absolute !important;
+
+  width: 1px !important;
+  height: 1px !important;
+
+  overflow: hidden !important;
+
+  clip-path:
+    inset(50%) !important;
+
+  white-space:
+    nowrap !important;
+}
+
+
+/* Mavjud SVG play belgisi */
+.logo-play {
+  position: absolute !important;
+
+  left: 13px !important;
+  top: 50% !important;
+
+  width: 23px !important;
+  height: 23px !important;
+
+  display: grid !important;
+  place-items: center !important;
+
+  transform:
+    translateY(-50%) !important;
+
+  color:
+    #59f671 !important;
+
+  z-index: 4;
+
+  filter:
+    drop-shadow(
+      0 0 7px
+      rgba(89,246,113,.45)
+    );
+}
+
+.logo-play svg {
+  width: 20px !important;
+  height: 20px !important;
+
+  color:
+    inherit !important;
+
+  fill:
+    currentColor !important;
+
+  stroke:
+    none !important;
+}
+
+
+/* Kanal monogrammasi */
+.logo-button::after {
+  content: "xD";
+
+  position: absolute;
+
+  right: 12px;
+  top: 50%;
+
+  transform:
+    translateY(-52%);
+
+  z-index: 4;
+
+  color:
+    #f5f8f5;
+
+  font-family:
+    "Inter",
+    Arial,
+    sans-serif !important;
+
+  font-size:
+    18px;
+
+  font-weight:
+    800;
+
+  letter-spacing:
+    -1px;
+
+  text-shadow:
+    0 0 10px
+    rgba(82,244,105,.20);
+}
+
+
+/* Telekanal uslubidagi scan */
+.logo-button::before {
+  content: "";
+
+  position: absolute;
+
+  z-index: 3;
+
+  top: -15%;
+  bottom: -15%;
+
+  left: -34px;
+
+  width: 22px;
+
+  transform:
+    skewX(-20deg);
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(108,255,130,.06),
+      rgba(120,255,140,.38),
+      rgba(255,255,255,.26),
+      rgba(110,255,130,.12),
+      transparent
+    );
+
+  filter:
+    blur(.5px);
+
+  animation:
+    xdLogoScan
+    5s
+    ease-in-out
+    infinite;
+}
+
+
+@keyframes xdLogoScan {
+
+  0%,
+  58% {
+    left: -36px;
+    opacity: 0;
+  }
+
+  63% {
+    opacity: .9;
+  }
+
+  79% {
+    left: 96px;
+    opacity: .7;
+  }
+
+  84%,
+  100% {
+    left: 96px;
+    opacity: 0;
+  }
+}
+
+
+@keyframes xdLogoBreath {
+
+  0%,
+  100% {
+    border-color:
+      rgba(84,247,107,.19);
+
+    box-shadow:
+      0 8px 26px rgba(0,0,0,.34),
+      inset 0 1px 0 rgba(255,255,255,.04),
+      0 0 14px rgba(72,242,96,.04);
+  }
+
+  50% {
+    border-color:
+      rgba(84,247,107,.30);
+
+    box-shadow:
+      0 8px 28px rgba(0,0,0,.38),
+      inset 0 1px 0 rgba(255,255,255,.05),
+      0 0 22px rgba(72,242,96,.11);
+  }
+}
+
+
+.logo-button:active {
+  transform:
+    scale(.96) !important;
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+
+  .logo-button,
+  .logo-button::before {
+    animation:
+      none !important;
+  }
+
+}
+
