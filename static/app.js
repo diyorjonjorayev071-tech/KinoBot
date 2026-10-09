@@ -885,6 +885,12 @@ async function loadHome() {
     const popular =
       itemsFrom(popularPayload);
 
+    // FINAL_V29_SPLASH_POSTERS_CALL
+    xdV29FillSplashFrames(
+      home,
+      popular
+    );
+
     let recommendations =
       popular
         .filter(item => imdbNumber(item.imdb) >= 7.5)
@@ -4971,3 +4977,381 @@ document.addEventListener(
     }
   }
 );
+
+
+// ============================================================
+// FINAL_V29_SPLASH_POSTERS
+// Oscar / iconic movie posters inside splash frames
+// ============================================================
+
+function xdV29NormalizeTitle(value) {
+
+  return String(value || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[????`?]/g, "'")
+    .toLowerCase()
+    .replace(/[^a-z0-9?-??' ]/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+
+function xdV29MovieName(movie) {
+
+  return (
+    movie?.name ||
+    movie?.title ||
+    movie?.name_uz ||
+    ''
+  );
+}
+
+
+function xdV29SplashScore(movie) {
+
+  const imdb =
+    Number(movie?.imdb) || 0;
+
+  const views =
+    Number(movie?.views) || 0;
+
+  return (
+    imdb * 1000000 +
+    Math.min(views, 999999)
+  );
+}
+
+
+function xdV29ChooseSplashMovies(
+  home,
+  popular
+) {
+
+  const pool = [];
+
+  const seen = new Set();
+
+
+  [
+    ...(home?.featured || []),
+    ...(home?.popular || []),
+    ...(home?.new || []),
+    ...(home?.stories || []),
+    ...(popular || [])
+  ].forEach(movie => {
+
+    const code =
+      Number(movie?.code);
+
+    if (
+      !code ||
+      seen.has(code)
+    ) {
+      return;
+    }
+
+    seen.add(code);
+    pool.push(movie);
+  });
+
+
+  /*
+    Avval Oscar olgan / juda mashhur filmlar.
+    Nom katalogda boshqa tilda bo'lsa aliaslar yordam beradi.
+  */
+
+  const priority = [
+
+    [
+      'oppenheimer'
+    ],
+
+    [
+      'titanic',
+      'titanik'
+    ],
+
+    [
+      'the godfather',
+      'godfather',
+      "cho'qintirgan ota",
+      'choqintirgan ota'
+    ],
+
+    [
+      'lord of the rings',
+      'return of the king',
+      'uzuklar hukmdori'
+    ],
+
+    [
+      'gladiator',
+      'gladiator 2000'
+    ],
+
+    [
+      'forrest gump',
+      'forest gump'
+    ],
+
+    [
+      'parasite',
+      'parazit'
+    ],
+
+    [
+      "schindler's list",
+      'schindler list',
+      'shindler'
+    ],
+
+    [
+      'green book',
+      'yashil kitob'
+    ],
+
+    [
+      'the departed',
+      'departed'
+    ],
+
+    [
+      '12 years a slave',
+      '12 yil qullikda'
+    ],
+
+    [
+      'slumdog millionaire'
+    ],
+
+    [
+      'everything everywhere all at once'
+    ],
+
+    [
+      'avatar'
+    ],
+
+    [
+      'interstellar'
+    ],
+
+    [
+      'inception'
+    ],
+
+    [
+      'joker'
+    ],
+
+    [
+      'the dark knight',
+      'dark knight'
+    ]
+  ];
+
+
+  const selected = [];
+
+  const selectedCodes =
+    new Set();
+
+
+  for (const aliases of priority) {
+
+    const found =
+      pool.find(movie => {
+
+        const code =
+          Number(movie?.code);
+
+        if (
+          !code ||
+          selectedCodes.has(code)
+        ) {
+          return false;
+        }
+
+        const title =
+          xdV29NormalizeTitle(
+            xdV29MovieName(movie)
+          );
+
+        return aliases.some(alias =>
+          title.includes(
+            xdV29NormalizeTitle(alias)
+          )
+        );
+      });
+
+
+    if (found) {
+
+      selected.push(found);
+
+      selectedCodes.add(
+        Number(found.code)
+      );
+    }
+  }
+
+
+  /*
+    Yetmagan joylar avtomatik:
+    yuqori IMDb + mashhur kinolar bilan to'ladi.
+  */
+
+  const fallback =
+    pool
+      .filter(movie =>
+        !selectedCodes.has(
+          Number(movie?.code)
+        )
+      )
+      .sort(
+        (a,b) =>
+          xdV29SplashScore(b) -
+          xdV29SplashScore(a)
+      );
+
+
+  for (const movie of fallback) {
+
+    if (selected.length >= 16) {
+      break;
+    }
+
+    selected.push(movie);
+  }
+
+
+  return selected.slice(0,16);
+}
+
+
+function xdV29SetPoster(
+  element,
+  movie,
+  delay = 0
+) {
+
+  if (
+    !element ||
+    !movie?.code
+  ) {
+    return;
+  }
+
+
+  const imageUrl =
+    posterUrl(movie.code);
+
+
+  const img =
+    new Image();
+
+
+  img.onload = () => {
+
+    element.style.setProperty(
+      '--xd-splash-poster',
+      `url("${imageUrl}")`
+    );
+
+    element.style.setProperty(
+      '--xd-poster-delay',
+      `${delay}ms`
+    );
+
+    element.classList.add(
+      'has-real-poster'
+    );
+
+    element.dataset.movieTitle =
+      xdV29MovieName(movie);
+  };
+
+
+  img.onerror = () => {
+
+    // eski cinematic gradient qoladi
+  };
+
+
+  img.src =
+    imageUrl;
+}
+
+
+function xdV29FillSplashFrames(
+  home,
+  popular
+) {
+
+  const movies =
+    xdV29ChooseSplashMovies(
+      home,
+      popular
+    );
+
+
+  if (!movies.length) {
+    return;
+  }
+
+
+  // 6 ta katta o'ng poster romkasi
+
+  const wall =
+    Array.from(
+      document.querySelectorAll(
+        '.v15-posters .v15-poster'
+      )
+    );
+
+
+  wall.forEach(
+    (element,index) => {
+
+      const movie =
+        movies[
+          index % movies.length
+        ];
+
+      xdV29SetPoster(
+        element,
+        movie,
+        index * 85
+      );
+    }
+  );
+
+
+  // yuqori + pastki film tasmasidagi jami 10 romka
+
+  const frames =
+    Array.from(
+      document.querySelectorAll(
+        '.v15-film-frames i'
+      )
+    );
+
+
+  frames.forEach(
+    (element,index) => {
+
+      const movie =
+        movies[
+          (index + wall.length) %
+          movies.length
+        ];
+
+      xdV29SetPoster(
+        element,
+        movie,
+        180 + index * 45
+      );
+    }
+  );
+}
