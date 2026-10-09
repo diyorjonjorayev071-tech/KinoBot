@@ -779,7 +779,7 @@ function renderGenres(genres) {
       )
       .map(x => x.trim())
       .filter(Boolean)
-  )].slice(0,16);
+  )];
 
   const root = $('#genreStrip');
 
@@ -1219,4 +1219,485 @@ async function loadBuildInfo() {
     }
 
   } catch (_) {}
+}
+
+
+// ============================================================
+// FINAL_V21_GENRE_ART
+// Har bir janr: o'z poster foni + o'z cinematic style
+// ============================================================
+
+function xdNormalizeGenre(value) {
+
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[????`?]/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+
+function xdGenreProfile(name) {
+
+  const key =
+    xdNormalizeGenre(name);
+
+
+  const rules = [
+
+    {
+      words: [
+        "qo'rqinchli",
+        "horror",
+        "dahshat"
+      ],
+      art: "horror",
+      g1: "#7b1026",
+      g2: "#160309"
+    },
+
+    {
+      words: [
+        "jangari",
+        "action"
+      ],
+      art: "action",
+      g1: "#ff5a19",
+      g2: "#391006"
+    },
+
+    {
+      words: [
+        "fantastika",
+        "fantasy"
+      ],
+      art: "fantasy",
+      g1: "#6748ff",
+      g2: "#101945"
+    },
+
+    {
+      words: [
+        "ilmiy fantastika",
+        "sci-fi",
+        "science fiction"
+      ],
+      art: "scifi",
+      g1: "#18d7e8",
+      g2: "#062c40"
+    },
+
+    {
+      words: [
+        "anime"
+      ],
+      art: "anime",
+      g1: "#ff4f9c",
+      g2: "#35165b"
+    },
+
+    {
+      words: [
+        "animatsion",
+        "animation",
+        "multfilm"
+      ],
+      art: "animation",
+      g1: "#20d9ad",
+      g2: "#124760"
+    },
+
+    {
+      words: [
+        "romantika",
+        "romance"
+      ],
+      art: "romance",
+      g1: "#ff557d",
+      g2: "#4b102c"
+    },
+
+    {
+      words: [
+        "komediya",
+        "comedy"
+      ],
+      art: "comedy",
+      g1: "#f6c947",
+      g2: "#725216"
+    },
+
+    {
+      words: [
+        "detektiv",
+        "detective"
+      ],
+      art: "detective",
+      g1: "#3a8ea7",
+      g2: "#0c242e"
+    },
+
+    {
+      words: [
+        "kriminal",
+        "crime"
+      ],
+      art: "crime",
+      g1: "#3d6075",
+      g2: "#10181e"
+    },
+
+    {
+      words: [
+        "triller",
+        "thriller"
+      ],
+      art: "thriller",
+      g1: "#bd2338",
+      g2: "#24070c"
+    },
+
+    {
+      words: [
+        "drama"
+      ],
+      art: "drama",
+      g1: "#a94449",
+      g2: "#31161a"
+    },
+
+    {
+      words: [
+        "biografik",
+        "biography"
+      ],
+      art: "biography",
+      g1: "#b78a4b",
+      g2: "#332412"
+    },
+
+    {
+      words: [
+        "tarixiy",
+        "history",
+        "historical"
+      ],
+      art: "history",
+      g1: "#aa7135",
+      g2: "#30200d"
+    },
+
+    {
+      words: [
+        "sarguzasht",
+        "adventure"
+      ],
+      art: "adventure",
+      g1: "#31ad76",
+      g2: "#0e3b2d"
+    },
+
+    {
+      words: [
+        "oilaviy",
+        "family"
+      ],
+      art: "family",
+      g1: "#42c978",
+      g2: "#173d35"
+    },
+
+    {
+      words: [
+        "musiqiy",
+        "music",
+        "musical"
+      ],
+      art: "music",
+      g1: "#ab45e5",
+      g2: "#291042"
+    },
+
+    {
+      words: [
+        "urush",
+        "war"
+      ],
+      art: "war",
+      g1: "#7b8c4a",
+      g2: "#252d15"
+    },
+
+    {
+      words: [
+        "sport"
+      ],
+      art: "sport",
+      g1: "#168ed7",
+      g2: "#063454"
+    },
+
+    {
+      words: [
+        "hujjatli",
+        "documentary"
+      ],
+      art: "documentary",
+      g1: "#4b9b83",
+      g2: "#142d26"
+    },
+
+    {
+      words: [
+        "western",
+        "vestern"
+      ],
+      art: "western",
+      g1: "#d47a2a",
+      g2: "#44200a"
+    },
+
+    {
+      words: [
+        "sirli",
+        "mystery"
+      ],
+      art: "mystery",
+      g1: "#5656b8",
+      g2: "#17172f"
+    }
+
+  ];
+
+
+  for (const rule of rules) {
+
+    if (
+      rule.words.some(
+        word => key.includes(word)
+      )
+    ) {
+
+      return rule;
+    }
+  }
+
+
+  // Yangi noma'lum janrlar uchun ham
+  // avtomatik alohida cinematic rang.
+
+  const fallback = [
+
+    ["cinema-a", "#25b77f", "#0b3728"],
+    ["cinema-b", "#377ed0", "#0b2848"],
+    ["cinema-c", "#9d56c8", "#2b123d"],
+    ["cinema-d", "#ca6c38", "#3d1b0b"],
+    ["cinema-e", "#7fac45", "#253612"],
+    ["cinema-f", "#b54d72", "#3d1223"]
+
+  ];
+
+
+  let hash = 0;
+
+  for (let i = 0; i < key.length; i++) {
+
+    hash =
+      (
+        (hash << 5)
+        - hash
+        + key.charCodeAt(i)
+      ) | 0;
+  }
+
+
+  const pick =
+    fallback[
+      Math.abs(hash) %
+      fallback.length
+    ];
+
+
+  return {
+    art: pick[0],
+    g1: pick[1],
+    g2: pick[2]
+  };
+}
+
+
+async function xdLoadGenrePoster(card) {
+
+  if (
+    !card ||
+    card.dataset.genrePosterState
+  ) {
+    return;
+  }
+
+
+  card.dataset.genrePosterState =
+    "loading";
+
+
+  const genre =
+    card.dataset.genre || '';
+
+
+  try {
+
+    const params =
+      new URLSearchParams({
+        genre,
+        sort: 'popular',
+        limit: '1'
+      });
+
+
+    const payload =
+      await api(
+        `/api/movies?${params.toString()}`
+      );
+
+
+    const movies =
+      itemsFrom(payload);
+
+
+    const movie =
+      movies[0];
+
+
+    if (
+      movie &&
+      movie.code != null
+    ) {
+
+      card.style.setProperty(
+        '--genre-poster',
+        `url("${posterUrl(movie.code)}")`
+      );
+
+
+      card.classList.add(
+        'has-genre-poster'
+      );
+
+
+      card.dataset.genrePosterState =
+        "loaded";
+
+    } else {
+
+      card.dataset.genrePosterState =
+        "fallback";
+    }
+
+  }
+  catch (_) {
+
+    card.dataset.genrePosterState =
+      "fallback";
+  }
+}
+
+
+function xdDecorateGenreCards() {
+
+  const cards =
+    document.querySelectorAll(
+      '.genre-card[data-genre]'
+    );
+
+
+  cards.forEach(card => {
+
+    if (
+      card.dataset.genreArtReady !==
+      "1"
+    ) {
+
+      const profile =
+        xdGenreProfile(
+          card.dataset.genre || ''
+        );
+
+
+      card.dataset.genreArt =
+        profile.art;
+
+
+      card.style.setProperty(
+        '--genre-g1',
+        profile.g1
+      );
+
+
+      card.style.setProperty(
+        '--genre-g2',
+        profile.g2
+      );
+
+
+      card.dataset.genreArtReady =
+        "1";
+    }
+
+
+    xdLoadGenrePoster(card);
+  });
+}
+
+
+let xdGenreDecorateTimer = null;
+
+
+const xdGenreObserver =
+  new MutationObserver(() => {
+
+    clearTimeout(
+      xdGenreDecorateTimer
+    );
+
+
+    xdGenreDecorateTimer =
+      setTimeout(
+        xdDecorateGenreCards,
+        30
+      );
+  });
+
+
+function xdStartGenreArt() {
+
+  xdDecorateGenreCards();
+
+
+  xdGenreObserver.observe(
+    document.body,
+    {
+      childList: true,
+      subtree: true
+    }
+  );
+}
+
+
+if (
+  document.readyState ===
+  'loading'
+) {
+
+  document.addEventListener(
+    'DOMContentLoaded',
+    xdStartGenreArt,
+    {
+      once: true
+    }
+  );
+
+}
+else {
+
+  xdStartGenreArt();
 }
