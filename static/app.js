@@ -3105,3 +3105,761 @@ if (document.body) {
     }
   );
 }
+
+
+// ============================================================
+// FINAL_V23_EDITORIAL_GENRES
+// Adult / premium cinematic editorial cards
+// ============================================================
+
+function xdV23Xml(value) {
+
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+
+function xdV23Hash(value) {
+
+  const text = String(value || '');
+
+  let hash = 0;
+
+  for (let i = 0; i < text.length; i++) {
+
+    hash =
+      (
+        (hash << 5)
+        - hash
+        + text.charCodeAt(i)
+      ) | 0;
+  }
+
+  return Math.abs(hash);
+}
+
+
+function xdV23Mode(art) {
+
+  if (
+    [
+      'horror',
+      'thriller',
+      'crime',
+      'detective',
+      'mystery'
+    ].includes(art)
+  ) {
+    return 'noir';
+  }
+
+
+  if (
+    [
+      'action',
+      'war',
+      'sport'
+    ].includes(art)
+  ) {
+    return 'kinetic';
+  }
+
+
+  if (
+    [
+      'scifi',
+      'fantasy',
+      'anime'
+    ].includes(art)
+  ) {
+    return 'cosmic';
+  }
+
+
+  if (
+    [
+      'history',
+      'biography',
+      'western',
+      'documentary'
+    ].includes(art)
+  ) {
+    return 'archive';
+  }
+
+
+  if (
+    [
+      'drama',
+      'romance'
+    ].includes(art)
+  ) {
+    return 'emotional';
+  }
+
+
+  if (
+    [
+      'music'
+    ].includes(art)
+  ) {
+    return 'music';
+  }
+
+
+  if (
+    [
+      'adventure'
+    ].includes(art)
+  ) {
+    return 'horizon';
+  }
+
+
+  return 'studio';
+}
+
+
+function xdV23GenreArtwork(genre) {
+
+  const profile =
+    xdGenreProfile(genre);
+
+  const art =
+    profile.art || 'cinema-a';
+
+  const mode =
+    xdV23Mode(art);
+
+  const accent =
+    profile.g1 || '#48e66a';
+
+  const deep =
+    profile.g2 || '#09170e';
+
+  const title =
+    xdV23Xml(
+      normalizeUzbekDisplayText(
+        String(genre || 'KINO')
+      ).toUpperCase()
+    );
+
+  const hash =
+    xdV23Hash(genre);
+
+  const angle =
+    18 + (hash % 34);
+
+  const flareX =
+    185 + (hash % 95);
+
+  const flareY =
+    30 + (hash % 55);
+
+  let texture = '';
+
+
+  // ==========================================================
+  // NOIR
+  // ==========================================================
+
+  if (mode === 'noir') {
+
+    texture = `
+      <g opacity=".26">
+        <path
+          d="M-30 45 L350 5"
+          stroke="#ffffff"
+          stroke-width="2"
+        />
+        <path
+          d="M-30 72 L350 32"
+          stroke="#ffffff"
+          stroke-width="1.5"
+        />
+        <path
+          d="M-30 99 L350 59"
+          stroke="#ffffff"
+          stroke-width="1.2"
+        />
+        <path
+          d="M-30 126 L350 86"
+          stroke="#ffffff"
+          stroke-width="1"
+        />
+      </g>
+
+      <ellipse
+        cx="242"
+        cy="72"
+        rx="88"
+        ry="38"
+        fill="${accent}"
+        opacity=".10"
+        filter="url(#blur)"
+      />
+
+      <rect
+        x="226"
+        y="-20"
+        width="11"
+        height="240"
+        fill="${accent}"
+        opacity=".16"
+        transform="rotate(24 226 100)"
+      />
+    `;
+  }
+
+
+  // ==========================================================
+  // KINETIC
+  // ==========================================================
+
+  else if (mode === 'kinetic') {
+
+    texture = `
+      <g
+        transform="rotate(-${angle} 160 100)"
+        opacity=".28"
+      >
+
+        <rect
+          x="-80"
+          y="34"
+          width="480"
+          height="5"
+          fill="${accent}"
+        />
+
+        <rect
+          x="-100"
+          y="59"
+          width="430"
+          height="2"
+          fill="#ffffff"
+        />
+
+        <rect
+          x="-80"
+          y="88"
+          width="520"
+          height="14"
+          fill="${accent}"
+          opacity=".30"
+        />
+
+        <rect
+          x="-110"
+          y="129"
+          width="460"
+          height="3"
+          fill="#ffffff"
+          opacity=".45"
+        />
+
+      </g>
+
+      <ellipse
+        cx="${flareX}"
+        cy="${flareY}"
+        rx="82"
+        ry="30"
+        fill="${accent}"
+        opacity=".13"
+        filter="url(#blur)"
+      />
+    `;
+  }
+
+
+  // ==========================================================
+  // COSMIC
+  // ==========================================================
+
+  else if (mode === 'cosmic') {
+
+    texture = `
+      <ellipse
+        cx="232"
+        cy="69"
+        rx="105"
+        ry="46"
+        fill="none"
+        stroke="${accent}"
+        stroke-width="2"
+        stroke-opacity=".36"
+        transform="rotate(-18 232 69)"
+      />
+
+      <ellipse
+        cx="232"
+        cy="69"
+        rx="71"
+        ry="28"
+        fill="none"
+        stroke="#ffffff"
+        stroke-width="1"
+        stroke-opacity=".16"
+        transform="rotate(16 232 69)"
+      />
+
+      <circle
+        cx="${flareX}"
+        cy="${flareY}"
+        r="57"
+        fill="${accent}"
+        opacity=".13"
+        filter="url(#blur)"
+      />
+
+      <g fill="#ffffff" opacity=".38">
+        <circle cx="45" cy="36" r="1"/>
+        <circle cx="82" cy="67" r="1.4"/>
+        <circle cx="126" cy="29" r=".8"/>
+        <circle cx="176" cy="54" r="1"/>
+        <circle cx="279" cy="35" r="1.2"/>
+        <circle cx="298" cy="92" r=".8"/>
+      </g>
+    `;
+  }
+
+
+  // ==========================================================
+  // ARCHIVE
+  // ==========================================================
+
+  else if (mode === 'archive') {
+
+    texture = `
+      <rect
+        x="30"
+        y="22"
+        width="260"
+        height="156"
+        fill="none"
+        stroke="${accent}"
+        stroke-width="1.5"
+        stroke-opacity=".20"
+      />
+
+      <rect
+        x="42"
+        y="34"
+        width="236"
+        height="132"
+        fill="none"
+        stroke="#ffffff"
+        stroke-width="1"
+        stroke-opacity=".08"
+      />
+
+      <path
+        d="M65 143 H255"
+        stroke="${accent}"
+        stroke-width="1.5"
+        stroke-opacity=".30"
+      />
+
+      <circle
+        cx="252"
+        cy="53"
+        r="52"
+        fill="${accent}"
+        opacity=".11"
+        filter="url(#blur)"
+      />
+
+      <g opacity=".11">
+        <path d="M74 33 V165" stroke="#fff"/>
+        <path d="M111 33 V165" stroke="#fff"/>
+        <path d="M148 33 V165" stroke="#fff"/>
+      </g>
+    `;
+  }
+
+
+  // ==========================================================
+  // EMOTIONAL
+  // ==========================================================
+
+  else if (mode === 'emotional') {
+
+    texture = `
+      <ellipse
+        cx="245"
+        cy="58"
+        rx="91"
+        ry="50"
+        fill="${accent}"
+        opacity=".16"
+        filter="url(#blur)"
+      />
+
+      <ellipse
+        cx="107"
+        cy="155"
+        rx="80"
+        ry="48"
+        fill="${accent}"
+        opacity=".08"
+        filter="url(#blur)"
+      />
+
+      <path
+        d="M178 -20
+           C142 49 215 77 175 134
+           C149 170 154 191 162 220"
+        fill="none"
+        stroke="#ffffff"
+        stroke-width="2"
+        stroke-opacity=".13"
+      />
+
+      <path
+        d="M193 -20
+           C157 49 230 77 190 134
+           C164 170 169 191 177 220"
+        fill="none"
+        stroke="${accent}"
+        stroke-width="7"
+        stroke-opacity=".13"
+      />
+    `;
+  }
+
+
+  // ==========================================================
+  // MUSIC
+  // ==========================================================
+
+  else if (mode === 'music') {
+
+    texture = `
+      <g opacity=".28">
+
+        <rect x="42"  y="105" width="4" height="56" fill="${accent}"/>
+        <rect x="55"  y="78"  width="4" height="83" fill="${accent}"/>
+        <rect x="68"  y="118" width="4" height="43" fill="${accent}"/>
+        <rect x="81"  y="61"  width="4" height="100" fill="${accent}"/>
+        <rect x="94"  y="91"  width="4" height="70" fill="${accent}"/>
+        <rect x="107" y="124" width="4" height="37" fill="${accent}"/>
+        <rect x="120" y="72"  width="4" height="89" fill="${accent}"/>
+
+      </g>
+
+      <circle
+        cx="240"
+        cy="67"
+        r="57"
+        fill="none"
+        stroke="${accent}"
+        stroke-width="2"
+        stroke-opacity=".28"
+      />
+
+      <circle
+        cx="240"
+        cy="67"
+        r="29"
+        fill="${accent}"
+        opacity=".10"
+        filter="url(#blur)"
+      />
+    `;
+  }
+
+
+  // ==========================================================
+  // HORIZON
+  // ==========================================================
+
+  else if (mode === 'horizon') {
+
+    texture = `
+      <circle
+        cx="254"
+        cy="58"
+        r="58"
+        fill="${accent}"
+        opacity=".13"
+        filter="url(#blur)"
+      />
+
+      <path
+        d="M0 148
+           L55 91
+           L92 121
+           L141 68
+           L194 126
+           L241 85
+           L320 147"
+        fill="none"
+        stroke="${accent}"
+        stroke-width="2"
+        stroke-opacity=".29"
+      />
+
+      <path
+        d="M0 158 H320"
+        stroke="#ffffff"
+        stroke-width="1"
+        stroke-opacity=".12"
+      />
+
+      <path
+        d="M0 167 H320"
+        stroke="${accent}"
+        stroke-width="1"
+        stroke-opacity=".12"
+      />
+    `;
+  }
+
+
+  // ==========================================================
+  // STUDIO
+  // ==========================================================
+
+  else {
+
+    texture = `
+      <circle
+        cx="${flareX}"
+        cy="${flareY}"
+        r="70"
+        fill="${accent}"
+        opacity=".11"
+        filter="url(#blur)"
+      />
+
+      <rect
+        x="52"
+        y="-50"
+        width="2"
+        height="300"
+        fill="#ffffff"
+        opacity=".10"
+        transform="rotate(28 52 100)"
+      />
+
+      <rect
+        x="87"
+        y="-50"
+        width="18"
+        height="300"
+        fill="${accent}"
+        opacity=".07"
+        transform="rotate(28 87 100)"
+      />
+
+      <rect
+        x="128"
+        y="-50"
+        width="1"
+        height="300"
+        fill="#ffffff"
+        opacity=".14"
+        transform="rotate(28 128 100)"
+      />
+    `;
+  }
+
+
+  return `
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 320 200"
+      preserveAspectRatio="xMidYMid slice"
+    >
+
+      <defs>
+
+        <linearGradient
+          id="base"
+          x1="0"
+          y1="0"
+          x2="1"
+          y2="1"
+        >
+
+          <stop
+            offset="0%"
+            stop-color="#020403"
+          />
+
+          <stop
+            offset="43%"
+            stop-color="${deep}"
+          />
+
+          <stop
+            offset="100%"
+            stop-color="#020302"
+          />
+
+        </linearGradient>
+
+
+        <radialGradient id="vignette">
+
+          <stop
+            offset="0%"
+            stop-color="#ffffff"
+            stop-opacity="0"
+          />
+
+          <stop
+            offset="70%"
+            stop-color="#000000"
+            stop-opacity=".15"
+          />
+
+          <stop
+            offset="100%"
+            stop-color="#000000"
+            stop-opacity=".63"
+          />
+
+        </radialGradient>
+
+
+        <filter id="blur">
+
+          <feGaussianBlur
+            stdDeviation="17"
+          />
+
+        </filter>
+
+
+        <filter id="grain">
+
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency=".72"
+            numOctaves="2"
+            seed="${(hash % 17) + 1}"
+          />
+
+          <feColorMatrix
+            type="saturate"
+            values="0"
+          />
+
+        </filter>
+
+      </defs>
+
+
+      <rect
+        width="320"
+        height="200"
+        fill="url(#base)"
+      />
+
+
+      ${texture}
+
+
+      <!-- editorial oversized type -->
+
+      <text
+        x="18"
+        y="73"
+        fill="#ffffff"
+        fill-opacity=".055"
+        font-family="Arial,Helvetica,sans-serif"
+        font-size="48"
+        font-weight="900"
+        letter-spacing="-2"
+      >
+        ${title}
+      </text>
+
+
+      <text
+        x="21"
+        y="111"
+        fill="${accent}"
+        fill-opacity=".075"
+        font-family="Arial,Helvetica,sans-serif"
+        font-size="29"
+        font-weight="800"
+        letter-spacing="4"
+      >
+        XD KINO
+      </text>
+
+
+      <!-- fine cinematic frame -->
+
+      <rect
+        x="1"
+        y="1"
+        width="318"
+        height="198"
+        fill="none"
+        stroke="#ffffff"
+        stroke-opacity=".06"
+        stroke-width="1"
+      />
+
+
+      <!-- grain -->
+
+      <rect
+        width="320"
+        height="200"
+        filter="url(#grain)"
+        opacity=".035"
+      />
+
+
+      <rect
+        width="320"
+        height="200"
+        fill="url(#vignette)"
+      />
+
+
+      <!-- anamorphic light -->
+
+      <rect
+        x="0"
+        y="${84 + (hash % 26)}"
+        width="320"
+        height="1"
+        fill="${accent}"
+        opacity=".19"
+      />
+
+    </svg>
+  `;
+}
+
+
+// V22 artwork engine o'rniga V23
+xdV22GenreArtwork =
+  xdV23GenreArtwork;
+
+
+// Ekrandagi mavjud kartalarni darhol yangilash
+setTimeout(
+  () => {
+
+    if (
+      typeof xdV22RefreshGenrePosters ===
+      'function'
+    ) {
+
+      xdV22RefreshGenrePosters();
+    }
+
+  },
+  20
+);
