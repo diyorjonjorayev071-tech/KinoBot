@@ -4920,3 +4920,658 @@ body {
   }
 }
 
+
+
+/* =========================================================
+   FINAL_V20_CINEMATIC_BACKGROUNDS
+   ========================================================= */
+
+
+/* =========================================================
+   COMMON
+   ========================================================= */
+
+#view-home,
+#view-search,
+#view-favorites,
+#view-profile {
+  position: relative !important;
+
+  min-height: 100vh;
+
+  isolation: isolate;
+
+  background:
+    #030603 !important;
+}
+
+
+/* Barcha content fon ustida */
+
+#view-home > *,
+#view-search > *,
+#view-favorites > *,
+#view-profile > * {
+  position: relative;
+
+  z-index: 2;
+}
+
+
+/* =========================================================
+   1. HOME
+   Projector + film atmosphere
+   ========================================================= */
+
+#view-home {
+  background:
+    radial-gradient(
+      ellipse at 18% 40%,
+      rgba(54,255,86,.065),
+      transparent 34%
+    ),
+
+    radial-gradient(
+      ellipse at 90% 72%,
+      rgba(26,158,48,.055),
+      transparent 30%
+    ),
+
+    linear-gradient(
+      180deg,
+      #020503 0%,
+      #040804 48%,
+      #020402 100%
+    ) !important;
+}
+
+
+#view-home::before {
+  content: "";
+
+  position: absolute;
+
+  z-index: 0;
+
+  left: -20%;
+  right: -20%;
+
+  top: 520px;
+  bottom: 0;
+
+  pointer-events: none;
+
+  opacity: .52;
+
+  background:
+
+    /* cinema projector cone */
+    linear-gradient(
+      115deg,
+      transparent 0 20%,
+      rgba(72,255,100,.025) 28%,
+      rgba(72,255,100,.07) 38%,
+      rgba(72,255,100,.018) 52%,
+      transparent 63%
+    ),
+
+    /* thin cinematic lines */
+    repeating-linear-gradient(
+      118deg,
+      transparent 0 27px,
+      rgba(99,255,120,.018) 28px,
+      transparent 29px 55px
+    );
+
+  animation:
+    xdV20HomeMove
+    18s
+    ease-in-out
+    infinite alternate;
+}
+
+
+#view-home::after {
+  content: "";
+
+  position: absolute;
+
+  z-index: 0;
+
+  width: 520px;
+  height: 82px;
+
+  right: -185px;
+  top: 930px;
+
+  pointer-events: none;
+
+  opacity: .12;
+
+  transform:
+    rotate(-15deg);
+
+  border-top:
+    2px solid
+    rgba(104,255,125,.20);
+
+  border-bottom:
+    2px solid
+    rgba(104,255,125,.20);
+
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,.08) 0 3px,
+      transparent 3px 44px
+    ),
+
+    linear-gradient(
+      180deg,
+      transparent 12px,
+      rgba(54,255,84,.07) 13px 67px,
+      transparent 68px
+    );
+
+  filter:
+    drop-shadow(
+      0 0 16px
+      rgba(66,255,92,.10)
+    );
+}
+
+
+/* =========================================================
+   2. SEARCH
+   Cinema projector room
+   ========================================================= */
+
+#view-search {
+  background:
+
+    radial-gradient(
+      circle at 88% 16%,
+      rgba(69,255,96,.095),
+      transparent 23%
+    ),
+
+    radial-gradient(
+      circle at 12% 78%,
+      rgba(34,148,56,.065),
+      transparent 28%
+    ),
+
+    linear-gradient(
+      160deg,
+      #030704,
+      #050a06 45%,
+      #020402
+    ) !important;
+}
+
+
+#view-search::before {
+  content: "";
+
+  position: absolute;
+
+  z-index: 0;
+
+  inset: 0;
+
+  pointer-events: none;
+
+  opacity: .56;
+
+  background:
+
+    /* projector beam */
+    conic-gradient(
+      from 225deg
+      at 88% 16%,
+
+      transparent 0deg,
+      transparent 13deg,
+
+      rgba(75,255,103,.065)
+      24deg,
+
+      rgba(75,255,103,.018)
+      41deg,
+
+      transparent 53deg
+    ),
+
+    /* studio grid */
+    linear-gradient(
+      rgba(92,255,113,.022) 1px,
+      transparent 1px
+    ),
+
+    linear-gradient(
+      90deg,
+      rgba(92,255,113,.022) 1px,
+      transparent 1px
+    );
+
+  background-size:
+    auto,
+    48px 48px,
+    48px 48px;
+
+  mask-image:
+    linear-gradient(
+      180deg,
+      rgba(0,0,0,.95),
+      rgba(0,0,0,.40)
+    );
+
+  animation:
+    xdV20SearchGlow
+    12s
+    ease-in-out
+    infinite alternate;
+}
+
+
+#view-search::after {
+  content: "";
+
+  position: absolute;
+
+  z-index: 0;
+
+  width: 220px;
+  height: 220px;
+
+  right: -95px;
+  top: 180px;
+
+  border-radius: 50%;
+
+  pointer-events: none;
+
+  opacity: .12;
+
+  border:
+    1px solid
+    rgba(85,255,109,.45);
+
+  box-shadow:
+    0 0 0 24px
+    rgba(85,255,109,.018),
+
+    0 0 0 48px
+    rgba(85,255,109,.014),
+
+    0 0 50px
+    rgba(85,255,109,.07);
+
+  animation:
+    xdV20ReelPulse
+    7s
+    ease-in-out
+    infinite;
+}
+
+
+/* =========================================================
+   3. FAVORITES
+   Dark film archive
+   ========================================================= */
+
+#view-favorites {
+  background:
+
+    radial-gradient(
+      circle at 50% 29%,
+      rgba(66,255,94,.075),
+      transparent 25%
+    ),
+
+    radial-gradient(
+      ellipse at 10% 72%,
+      rgba(32,124,48,.05),
+      transparent 34%
+    ),
+
+    linear-gradient(
+      180deg,
+      #020503,
+      #030603 50%,
+      #010201
+    ) !important;
+}
+
+
+#view-favorites::before {
+  content: "";
+
+  position: absolute;
+
+  z-index: 0;
+
+  width: 330px;
+  height: 330px;
+
+  left: 50%;
+  top: 245px;
+
+  transform:
+    translateX(-50%)
+    rotate(8deg);
+
+  pointer-events: none;
+
+  opacity: .10;
+
+  border-radius: 50%;
+
+  background:
+
+    radial-gradient(
+      circle,
+      transparent 0 12%,
+      rgba(107,255,126,.30) 12.5% 14%,
+      transparent 14.5% 25%,
+      rgba(107,255,126,.18) 25.5% 27%,
+      transparent 27.5% 45%,
+      rgba(107,255,126,.12) 45.5% 47%,
+      transparent 47.5%
+    );
+
+  box-shadow:
+    0 0 65px
+    rgba(67,245,93,.06);
+
+  animation:
+    xdV20ArchiveSpin
+    34s
+    linear
+    infinite;
+}
+
+
+#view-favorites::after {
+  content: "";
+
+  position: absolute;
+
+  z-index: 0;
+
+  left: -100px;
+  bottom: 160px;
+
+  width: 520px;
+  height: 72px;
+
+  pointer-events: none;
+
+  opacity: .085;
+
+  transform:
+    rotate(13deg);
+
+  border-top:
+    2px solid
+    rgba(105,255,125,.34);
+
+  border-bottom:
+    2px solid
+    rgba(105,255,125,.34);
+
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 28px,
+      rgba(119,255,138,.23) 29px 33px,
+      transparent 34px 55px
+    );
+}
+
+
+/* =========================================================
+   4. PROFILE
+   Premium cinema lounge
+   ========================================================= */
+
+#view-profile {
+  background:
+
+    radial-gradient(
+      ellipse at 50% 23%,
+      rgba(83,255,107,.10),
+      transparent 27%
+    ),
+
+    radial-gradient(
+      ellipse at 85% 64%,
+      rgba(165,135,47,.035),
+      transparent 30%
+    ),
+
+    radial-gradient(
+      ellipse at 12% 72%,
+      rgba(36,150,55,.055),
+      transparent 30%
+    ),
+
+    linear-gradient(
+      180deg,
+      #030704,
+      #040804 45%,
+      #020402
+    ) !important;
+}
+
+
+#view-profile::before {
+  content: "";
+
+  position: absolute;
+
+  z-index: 0;
+
+  left: 50%;
+  top: 105px;
+
+  width: 430px;
+  height: 430px;
+
+  transform:
+    translateX(-50%);
+
+  pointer-events: none;
+
+  border-radius: 50%;
+
+  background:
+
+    radial-gradient(
+      circle,
+      rgba(71,245,98,.08) 0,
+      rgba(71,245,98,.035) 26%,
+      transparent 61%
+    );
+
+  filter:
+    blur(3px);
+
+  animation:
+    xdV20ProfileHalo
+    7s
+    ease-in-out
+    infinite;
+}
+
+
+#view-profile::after {
+  content: "";
+
+  position: absolute;
+
+  z-index: 0;
+
+  left: 0;
+  right: 0;
+
+  top: 520px;
+  bottom: 0;
+
+  pointer-events: none;
+
+  opacity: .23;
+
+  background:
+
+    linear-gradient(
+      118deg,
+      transparent 0 31%,
+      rgba(96,255,117,.025) 32% 33%,
+      transparent 34% 66%,
+      rgba(96,255,117,.018) 67% 68%,
+      transparent 69%
+    ),
+
+    radial-gradient(
+      ellipse at center bottom,
+      rgba(107,80,30,.03),
+      transparent 55%
+    );
+}
+
+
+/* =========================================================
+   Cards stay readable
+   ========================================================= */
+
+#view-search .search-box,
+#view-search select,
+#view-profile .profile-card,
+#view-favorites .empty-state,
+#view-search .movie-card,
+#view-home .movie-card {
+  backdrop-filter:
+    blur(2px);
+}
+
+
+/* =========================================================
+   ANIMATION
+   ========================================================= */
+
+@keyframes xdV20HomeMove {
+
+  from {
+    transform:
+      translate3d(-10px,0,0);
+  }
+
+  to {
+    transform:
+      translate3d(18px,-16px,0);
+  }
+}
+
+
+@keyframes xdV20SearchGlow {
+
+  from {
+    opacity:
+      .44;
+
+    background-position:
+      0 0,
+      0 0,
+      0 0;
+  }
+
+  to {
+    opacity:
+      .65;
+
+    background-position:
+      0 0,
+      16px 10px,
+      16px 10px;
+  }
+}
+
+
+@keyframes xdV20ReelPulse {
+
+  0%,
+  100% {
+    transform:
+      scale(.92);
+
+    opacity:
+      .07;
+  }
+
+  50% {
+    transform:
+      scale(1.05);
+
+    opacity:
+      .15;
+  }
+}
+
+
+@keyframes xdV20ArchiveSpin {
+
+  from {
+    transform:
+      translateX(-50%)
+      rotate(0deg);
+  }
+
+  to {
+    transform:
+      translateX(-50%)
+      rotate(360deg);
+  }
+}
+
+
+@keyframes xdV20ProfileHalo {
+
+  0%,
+  100% {
+    opacity:
+      .60;
+
+    transform:
+      translateX(-50%)
+      scale(.94);
+  }
+
+  50% {
+    opacity:
+      1;
+
+    transform:
+      translateX(-50%)
+      scale(1.06);
+  }
+}
+
+
+/* =========================================================
+   Performance / Accessibility
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  #view-home::before,
+  #view-search::before,
+  #view-search::after,
+  #view-favorites::before,
+  #view-profile::before {
+
+    animation:
+      none !important;
+  }
+}
+
