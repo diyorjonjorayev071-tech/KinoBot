@@ -375,29 +375,372 @@ async def show_top_movies(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(msg, parse_mode="HTML")
 
 
-async def show_genres(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    genres = get_genres()
+
+# ============================================================
+# ATOMIC_GENRES_MENU_V2
+# ============================================================
+
+def _genre_key(value: str) -> str:
+    return (
+        str(value or "")
+        .replace("\u2019", "'")
+        .replace("\u2018", "'")
+        .replace("\u02bb", "'")
+        .replace("\u02bc", "'")
+        .replace("`", "'")
+        .strip()
+        .casefold()
+    )
+
+
+def _genre_parts(value: str) -> list[str]:
+    result = []
+
+    for raw in str(value or "").split(","):
+        item = (
+            raw
+            .replace("\u2019", "'")
+            .replace("\u2018", "'")
+            .replace("\u02bb", "'")
+            .replace("\u02bc", "'")
+            .replace("`", "'")
+            .strip()
+        )
+
+        if item:
+            result.append(item)
+
+    return result
+
+
+def _canonical_genre(value: str) -> str:
+    clean = str(value or "").strip()
+    key = _genre_key(clean)
+
+    aliases = {
+        "animation": "Animatsion",
+        "animatsiya": "Animatsion",
+        "animatsion": "Animatsion",
+
+        "anime": "Anime",
+
+        "action": "Jangari",
+        "jangari": "Jangari",
+
+        "detective": "Detektiv",
+        "detektiv": "Detektiv",
+
+        "crime": "Kriminal",
+        "kriminal": "Kriminal",
+
+        "horror": "Qo'rqinchli",
+        "dahshat": "Qo'rqinchli",
+        "qo'rqinchli": "Qo'rqinchli",
+
+        "war": "Harbiy",
+        "urush": "Harbiy",
+        "harbiy": "Harbiy",
+
+        "thriller": "Triller",
+        "triller": "Triller",
+
+        "adventure": "Sarguzasht",
+        "sarguzasht": "Sarguzasht",
+
+        "melodrama": "Melodrama",
+
+        "drama": "Drama",
+
+        "comedy": "Komediya",
+        "komediya": "Komediya",
+
+        "sport": "Sport",
+
+        "western": "Western",
+        "vestern": "Western",
+
+        "fantastika": "Fantastika",
+
+        "fantasy": "Fentezi",
+        "fantaziya": "Fentezi",
+        "fentezi": "Fentezi",
+
+        "sci-fi": "Ilmiy-fantastika",
+        "science fiction": "Ilmiy-fantastika",
+        "ilmiy fantastika": "Ilmiy-fantastika",
+        "ilmiy-fantastika": "Ilmiy-fantastika",
+
+        "history": "Tarixiy",
+        "historical": "Tarixiy",
+        "tarixiy": "Tarixiy",
+
+        "biography": "Biografik",
+        "biografiya": "Biografik",
+        "biografik": "Biografik",
+
+        "hayotiy": "Hayotiy",
+
+        "disaster": "Falokat",
+        "falokat": "Falokat",
+
+        "documentary": "Hujjatli",
+        "hujjatli": "Hujjatli",
+
+        "romance": "Romantika",
+        "romantika": "Romantika",
+
+        "retro": "Retro",
+
+        "music": "Musiqiy",
+        "musical": "Musiqiy",
+        "musiqiy": "Musiqiy",
+
+        "family": "Oilaviy",
+        "oilaviy": "Oilaviy",
+    }
+
+    if key in aliases:
+        return aliases[key]
+
+    if not clean:
+        return ""
+
+    return clean[:1].upper() + clean[1:]
+
+
+def _genre_emoji(value: str) -> str:
+    key = _genre_key(
+        _canonical_genre(value)
+    )
+
+    icons = {
+        "animatsion": "\U0001F3A8",
+        "anime": "\U0001F338",
+        "jangari": "\u26A1",
+        "detektiv": "\U0001F575\uFE0F",
+        "kriminal": "\U0001F303",
+        "qo'rqinchli": "\U0001F56F\uFE0F",
+        "harbiy": "\u2694\uFE0F",
+        "triller": "\U0001F311",
+        "sarguzasht": "\U0001F9ED",
+        "melodrama": "\U0001F339",
+        "drama": "\U0001F3AD",
+        "komediya": "\U0001F604",
+        "sport": "\U0001F3C6",
+        "western": "\U0001F920",
+        "fantastika": "\U0001F680",
+        "fentezi": "\u2728",
+        "ilmiy-fantastika": "\U0001FA90",
+        "tarixiy": "\U0001F3DB\uFE0F",
+        "biografik": "\U0001F464",
+        "hayotiy": "\U0001F39E\uFE0F",
+        "falokat": "\U0001F32A\uFE0F",
+        "hujjatli": "\U0001F4DA",
+        "romantika": "\u2764\uFE0F",
+        "retro": "\U0001F4FD\uFE0F",
+        "musiqiy": "\U0001F3B5",
+        "oilaviy": "\U0001F46A",
+    }
+
+    return icons.get(
+        key,
+        "\U0001F3AC",
+    )
+
+
+def _atomic_genres():
+    """
+    Masalan:
+      Animatsion, Oilaviy, Komediya (7)
+
+    ni alohida:
+      Animatsion
+      Oilaviy
+      Komediya
+
+    hisobiga qo'shadi.
+    """
+
+    counts = {}
+    labels = {}
+
+    for combined_genre, count in get_genres():
+
+        try:
+            amount = int(count or 0)
+        except (TypeError, ValueError):
+            amount = 0
+
+        seen = set()
+
+        for part in _genre_parts(
+            combined_genre
+        ):
+
+            label = _canonical_genre(
+                part
+            )
+
+            key = _genre_key(
+                label
+            )
+
+            if (
+                not key
+                or key in seen
+            ):
+                continue
+
+            seen.add(key)
+
+            labels[key] = label
+
+            counts[key] = (
+                counts.get(key, 0)
+                + amount
+            )
+
+    result = [
+        (
+            labels[key],
+            counts[key],
+        )
+        for key in counts
+        if counts[key] > 0
+    ]
+
+    # Eng ko'p kinoli janrlar yuqorida
+    result.sort(
+        key=lambda item: (
+            -item[1],
+            item[0].casefold(),
+        )
+    )
+
+    return result
+
+
+def _movies_by_atomic_genre(
+    selected_genre: str,
+):
+    """
+    'Sarguzasht' bosilsa:
+      Sarguzasht
+      Sarguzasht, Jangari
+      Animatsion, Oilaviy, Sarguzasht
+
+    ichidagi barcha kinolarni yig'adi.
+    """
+
+    target = _genre_key(
+        _canonical_genre(
+            selected_genre
+        )
+    )
+
+    stored_genres = []
+
+    for combined_genre, _count in get_genres():
+
+        atomic_keys = {
+            _genre_key(
+                _canonical_genre(part)
+            )
+            for part in _genre_parts(
+                combined_genre
+            )
+        }
+
+        if target in atomic_keys:
+            stored_genres.append(
+                combined_genre
+            )
+
+    if not stored_genres:
+        return get_movies_by_genre(
+            selected_genre
+        )
+
+    result = []
+    seen_codes = set()
+
+    for stored_genre in stored_genres:
+
+        rows = get_movies_by_genre(
+            stored_genre
+        )
+
+        for movie in rows:
+
+            try:
+                code_key = int(movie[0])
+            except Exception:
+                code_key = repr(movie)
+
+            if code_key in seen_codes:
+                continue
+
+            seen_codes.add(
+                code_key
+            )
+
+            result.append(
+                movie
+            )
+
+    return result
+
+
+async def show_genres(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    genres = _atomic_genres()
+
     if not genres:
-        await update.message.reply_text("❌ Janrlar mavjud emas.")
+        await update.message.reply_text(
+            "\u274C Janrlar mavjud emas."
+        )
         return
 
-    keyboard = [
-        [
+    keyboard = []
+    row = []
+
+    for genre, count in genres:
+
+        button_text = (
+            f"{_genre_emoji(genre)} "
+            f"{genre} \u00B7 {count}"
+        )
+
+        row.append(
             InlineKeyboardButton(
-                f"🎭 {genre} ({count})",
-                callback_data=f"genre:{genre}",
+                button_text,
+                callback_data=(
+                    f"genre:{genre}"
+                ),
             )
-        ]
-        for genre, count in genres
-    ]
+        )
+
+        if len(row) == 2:
+            keyboard.append(row)
+            row = []
+
+    if row:
+        keyboard.append(row)
+
     await update.message.reply_text(
-        "🎭 Janrni tanlang:",
-        reply_markup=InlineKeyboardMarkup(keyboard),
+        "\U0001F3AC <b>Janrlar</b>\n\n"
+        "Kerakli janrni tanlang:",
+        parse_mode="HTML",
+        reply_markup=InlineKeyboardMarkup(
+            keyboard
+        ),
     )
 
 
 async def show_movies_by_genre(update: Update, context: ContextTypes.DEFAULT_TYPE, genre: str):
-    movies = get_movies_by_genre(genre)
+    movies = _movies_by_atomic_genre(genre)
     if not movies:
         await update.message.reply_text("❌ Bu janrda kino topilmadi.")
         return
@@ -564,7 +907,7 @@ async def movie_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if data.startswith("genre:"):
         genre = data.split(":", 1)[1]
-        movies = get_movies_by_genre(genre)
+        movies = _movies_by_atomic_genre(genre)
         if not movies:
             await query.answer("❌ Kino topilmadi.", show_alert=True)
             return
