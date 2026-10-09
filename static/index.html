@@ -16,143 +16,122 @@
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <link rel="stylesheet" href="/static/app.css?v=final-v14-premium">
+  <link rel="stylesheet" href="/static/app.css?v=final-v15-splash">
 </head>
 
 <body>
 
   <!-- CINEMATIC SPLASH -->
-  <div id="splash" class="splash cinema-splash">
+  <div id="splash" class="splash v15-splash">
 
-    <div class="cinema-bg"></div>
-    <div class="cinema-vignette"></div>
-    <div class="cinema-noise"></div>
+    <div class="v15-depth"></div>
+    <div class="v15-green-glow glow-a"></div>
+    <div class="v15-green-glow glow-b"></div>
 
-    <!-- blurred poster wall -->
-    <div class="cinema-poster-wall" aria-hidden="true">
-      <div class="cinema-poster poster-a">
-        <span>AVATAR</span>
-      </div>
-
-      <div class="cinema-poster poster-b">
-        <span>JOKER</span>
-      </div>
-
-      <div class="cinema-poster poster-c">
-        <span>SPIDER-MAN</span>
+    <!-- LEFT CINEMA REEL -->
+    <div class="v15-reel-wrap" aria-hidden="true">
+      <div class="v15-reel">
+        <div class="v15-reel-hole rh1"></div>
+        <div class="v15-reel-hole rh2"></div>
+        <div class="v15-reel-hole rh3"></div>
+        <div class="v15-reel-hole rh4"></div>
+        <div class="v15-reel-hole rh5"></div>
+        <div class="v15-reel-core"></div>
       </div>
     </div>
 
-
-    <!-- metallic movie reel -->
-    <div class="cinema-reel" aria-hidden="true">
-
-      <div class="reel-ring"></div>
-
-      <i class="reel-hole h1"></i>
-      <i class="reel-hole h2"></i>
-      <i class="reel-hole h3"></i>
-      <i class="reel-hole h4"></i>
-      <i class="reel-hole h5"></i>
-
-      <div class="reel-center"></div>
-    </div>
-
-
-    <!-- sweeping film ribbon -->
-    <div class="cinema-film film-one" aria-hidden="true">
-      <div class="film-holes top">
-        <i></i><i></i><i></i><i></i><i></i><i></i>
-      </div>
-
-      <div class="film-frames">
-        <span>XD</span>
-        <span>KINO</span>
-        <span>FILM</span>
-        <span>2026</span>
-      </div>
-
-      <div class="film-holes bottom">
-        <i></i><i></i><i></i><i></i><i></i><i></i>
-      </div>
-    </div>
-
-
-    <div class="cinema-film film-two" aria-hidden="true">
-      <div class="film-holes top">
+    <!-- TOP FILM STRIP -->
+    <div class="v15-film v15-film-top" aria-hidden="true">
+      <div class="v15-film-holes"></div>
+      <div class="v15-film-frames">
         <i></i><i></i><i></i><i></i><i></i>
       </div>
+      <div class="v15-film-holes bottom"></div>
+    </div>
 
-      <div class="film-frames">
-        <span>MOVIE</span>
-        <span>XD</span>
-        <span>KINO</span>
+    <!-- RIGHT POSTER WALL -->
+    <div class="v15-posters" aria-hidden="true">
+
+      <div class="v15-poster p1">
+        <span>ACTION</span>
       </div>
 
-      <div class="film-holes bottom">
+      <div class="v15-poster p2">
+        <span>DRAMA</span>
+      </div>
+
+      <div class="v15-poster p3">
+        <span>ANIME</span>
+      </div>
+
+      <div class="v15-poster p4">
+        <span>THRILLER</span>
+      </div>
+
+      <div class="v15-poster p5">
+        <span>FANTASY</span>
+      </div>
+
+      <div class="v15-poster p6">
+        <span>SCI-FI</span>
+      </div>
+
+    </div>
+
+    <!-- BOTTOM FILM STRIP -->
+    <div class="v15-film v15-film-bottom" aria-hidden="true">
+      <div class="v15-film-holes"></div>
+      <div class="v15-film-frames">
         <i></i><i></i><i></i><i></i><i></i>
       </div>
+      <div class="v15-film-holes bottom"></div>
+    </div>
+
+    <!-- LIGHT PARTICLES -->
+    <div class="v15-particles" aria-hidden="true">
+      <i></i><i></i><i></i><i></i><i></i>
+      <i></i><i></i><i></i><i></i><i></i>
+      <i></i><i></i>
     </div>
 
 
-    <!-- clapperboard -->
-    <div class="cinema-clapper" aria-hidden="true">
-      <div class="clapper-top">
-        <i></i><i></i><i></i><i></i>
+    <!-- CENTER BRAND -->
+    <div class="v15-center">
+
+      <div class="v15-logo-mark" aria-hidden="true">
+
+        <div class="v15-logo-left">
+          <span class="v15-play"></span>
+        </div>
+
+        <div class="v15-logo-cut"></div>
+
+        <div class="v15-logo-right"></div>
+
       </div>
 
-      <div class="clapper-body">
+      <div class="v15-title">
         <b>xD</b>
+        <strong>KINO</strong>
+      </div>
+
+      <div class="v15-subtitle">
         <span>KINO</span>
-      </div>
-    </div>
-
-
-    <!-- popcorn -->
-    <div class="cinema-popcorn" aria-hidden="true">
-      <div class="popcorn-cloud">
-        <i></i><i></i><i></i><i></i><i></i>
+        <i></i>
+        <span>SERIAL</span>
+        <i></i>
+        <span>MULTFILM</span>
       </div>
 
-      <div class="popcorn-box">
-        <span></span>
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-    </div>
-
-
-    <!-- particles -->
-    <div class="cinema-particles" aria-hidden="true">
-      <i></i><i></i><i></i><i></i><i></i>
-      <i></i><i></i><i></i><i></i><i></i>
-    </div>
-
-
-    <!-- CENTER LOGO -->
-    <div class="cinema-center">
-
-      <div class="cinema-logo-box">
-        <div class="cinema-play"></div>
-        <strong>xD</strong>
-      </div>
-
-      <div class="cinema-brand">
-        <b>xD</b><span>KINO</span>
-      </div>
-
-      <div class="cinema-subtitle">
-        Kino. Serial. Multfilm.
-      </div>
-
-      <div class="cinema-loading" aria-label="Yuklanmoqda">
+      <div class="v15-loader">
         <i></i>
         <i></i>
         <i></i>
       </div>
 
     </div>
+
+    <div class="v15-vignette"></div>
 
   </div>
 
@@ -416,6 +395,6 @@
 
   <div id="toast" class="toast"></div>
 
-  <script src="/static/app.js?v=final-v14-premium"></script>
+  <script src="/static/app.js?v=final-v15-splash"></script>
 </body>
 </html>

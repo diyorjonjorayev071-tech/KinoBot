@@ -39,7 +39,7 @@ function escapeHtml(value='') {
 
 
 function posterUrl(code) {
-  return `/api/poster/${encodeURIComponent(code)}?v=final-v14-premium`;
+  return `/api/poster/${encodeURIComponent(code)}?v=final-v15-splash`;
 }
 
 
