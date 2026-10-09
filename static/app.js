@@ -638,6 +638,20 @@ function setHero(item) {
 
 function watchMovie(item) {
 
+  // FINAL_V30_HISTORY_TRACK
+  if (tg?.initData) {
+
+    api('/api/history', {
+      method: 'POST',
+      body: JSON.stringify({
+        movie_code: Number(code),
+      }),
+    }).catch(() => {});
+
+  }
+
+
+
   if (!item?.code) return;
 
   const link =
@@ -1101,7 +1115,7 @@ async function loadProfile() {
   try {
 
     const profile =
-      await api('/api/profile');
+      await api('/api/profile-stats');
 
     $('#favoriteCount').textContent =
       profile.favorites_count ?? 0;

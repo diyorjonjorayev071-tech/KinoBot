@@ -56,7 +56,7 @@ def health() -> dict[str, Any]:
     return {
         "status": "ok",
         "service": "xd-kino-clean",
-        "ui_version": "final-v29-splash-posters",
+        "ui_version": "final-v30-profile-stats",
         **info,
     }
 
@@ -238,6 +238,134 @@ async def favorites_get(request: Request) -> Response:
 async def favorites_post(request: Request) -> Response:
     return await _favorites_proxy(request)
 
+
+
+
+# ============================================================
+# FINAL_V30_PROFILE_STATS
+# ============================================================
+
+async def _v30_user_proxy(
+    request: Request,
+    upstream_path: str,
+) -> Response:
+
+    init_data = (
+        request.headers
+        .get("X-Telegram-Init-Data", "")
+        .strip()
+    )
+
+    if not init_data:
+        return Response(
+            content='{"detail":"Telegram initData yoq."}',
+            status_code=401,
+            media_type="application/json",
+        )
+
+    headers = {
+        "X-Telegram-Init-Data": init_data,
+    }
+
+    body = None
+
+    if request.method in {
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+    }:
+        body = await request.body()
+
+        headers["Content-Type"] = (
+            request.headers.get(
+                "Content-Type",
+                "application/json",
+            )
+        )
+
+    try:
+
+        async with httpx.AsyncClient(
+            timeout=20,
+            follow_redirects=True,
+        ) as client:
+
+            upstream = await client.request(
+                request.method,
+                f"{FAVORITES_BACKEND}{upstream_path}",
+                headers=headers,
+                content=body,
+            )
+
+        content_type = (
+            upstream.headers
+            .get(
+                "content-type",
+                "application/json",
+            )
+            .split(";")[0]
+            .strip()
+        )
+
+        return Response(
+            content=upstream.content,
+            status_code=upstream.status_code,
+            media_type=content_type,
+            headers={
+                "Cache-Control": "no-store",
+                "X-xD-User-Source": "proxy",
+            },
+        )
+
+    except Exception as exc:
+
+        return Response(
+            content=(
+                '{"detail":"User statistikasi vaqtincha mavjud emas."}'
+            ),
+            status_code=502,
+            media_type="application/json",
+            headers={
+                "Cache-Control": "no-store",
+                "X-xD-User-Error": type(exc).__name__,
+            },
+        )
+
+
+@app.get("/api/profile-stats")
+async def v30_profile_stats(
+    request: Request,
+) -> Response:
+
+    return await _v30_user_proxy(
+        request,
+        "/api/profile",
+    )
+
+
+
+@app.get("/api/history")
+async def v30_history_get(
+    request: Request,
+) -> Response:
+
+    return await _v30_user_proxy(
+        request,
+        "/api/history",
+    )
+
+
+
+@app.post("/api/history")
+async def v30_history_post(
+    request: Request,
+) -> Response:
+
+    return await _v30_user_proxy(
+        request,
+        "/api/history",
+    )
 
 
 @app.get("/api/poster/{code}")
