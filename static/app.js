@@ -636,38 +636,76 @@ function setHero(item) {
 }
 
 
-function watchMovie(item) {
+// FINAL_V31_WATCH_FIX
+function watchMovie(itemOrCode) {
 
-  // FINAL_V30_HISTORY_TRACK
+  const code =
+    Number(
+      typeof itemOrCode === 'object'
+        ? itemOrCode?.code
+        : itemOrCode
+    );
+
+  if (
+    !Number.isFinite(code) ||
+    code <= 0
+  ) {
+    toast("Kino kodi topilmadi.");
+    return;
+  }
+
+
+  /*
+    Ko'rilganlar tarixiga yozamiz.
+    Bu Telegram linkini ochishni BLOKLAMAYDI.
+  */
   if (tg?.initData) {
 
     api('/api/history', {
       method: 'POST',
       body: JSON.stringify({
-        movie_code: Number(code),
-      }),
+        movie_code: code
+      })
     }).catch(() => {});
 
   }
 
 
-
-  if (!item?.code) return;
-
   const link =
-    `https://t.me/xDKinoCodeBot?start=movie_${encodeURIComponent(item.code)}`;
+    `https://t.me/xDKinoCodeBot?start=movie_${encodeURIComponent(code)}`;
 
+
+  /*
+    Telegram Mini App ichida asosiy usul.
+    Muhimi: bu chaqiruv user click ichida
+    darhol bajariladi.
+  */
   try {
-    if (tg?.openTelegramLink) {
+
+    if (
+      tg &&
+      typeof tg.openTelegramLink === 'function'
+    ) {
+
       tg.openTelegramLink(link);
       return;
     }
+
   } catch (_) {}
 
-  window.location.href = link;
+
+  /*
+    Telegram API ishlamasa browser fallback.
+  */
+  try {
+
+    window.location.assign(link);
+
+  } catch (_) {
+
+    window.location.href = link;
+  }
 }
-
-
 function openMovie(item) {
 
   state.selected = item;
