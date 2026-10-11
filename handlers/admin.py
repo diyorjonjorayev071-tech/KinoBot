@@ -61,12 +61,14 @@ def _channel_promo_keyboard(code: int) -> InlineKeyboardMarkup:
                 InlineKeyboardButton(
                     "\U0001F37F TOMOSHA QILISH",
                     url=f"{base_url}?start=movie_{code}",
+                    api_kwargs={"style": "danger"},
                 )
             ],
             [
                 InlineKeyboardButton(
                     "\U0001F4F2 KINO ILOVA",
                     url=f"{base_url}?startapp=movie_{code}",
+                    api_kwargs={"style": "primary"},
                 )
             ],
         ]

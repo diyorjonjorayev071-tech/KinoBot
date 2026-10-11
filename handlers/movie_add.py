@@ -298,12 +298,14 @@ async def movie_add_video_handler(update: Update, context: ContextTypes.DEFAULT_
                         InlineKeyboardButton(
                             "\U0001F37F TOMOSHA QILISH",
                             url=f"https://t.me/{bot_username}?start=movie_{code}",
+                            api_kwargs={"style": "danger"},
                         )
                     ],
                     [
                         InlineKeyboardButton(
                             "\U0001F4F2 KINO ILOVA",
                             url=f"https://t.me/{bot_username}?startapp=movie_{code}",
+                            api_kwargs={"style": "primary"},
                         )
                     ],
                 ]
