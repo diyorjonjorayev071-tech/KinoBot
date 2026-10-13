@@ -221,8 +221,10 @@ function escapeHtml(value='') {
 }
 
 
+const POSTER_SESSION_REV = Date.now();
+
 function posterUrl(code) {
-  return `/api/poster/${encodeURIComponent(code)}?v=final-v15-splash`;
+  return `/api/poster/${encodeURIComponent(code)}?v=final-v32-poster-sync&s=${POSTER_SESSION_REV}`;
 }
 
 

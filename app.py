@@ -56,7 +56,7 @@ def health() -> dict[str, Any]:
     return {
         "status": "ok",
         "service": "xd-kino-clean",
-        "ui_version": "final-v31-watch-fix",
+        "ui_version": "final-v32-poster-sync",
         **info,
     }
 
@@ -378,18 +378,21 @@ async def poster(code: int) -> Response:
 
     name, file_id = info
 
+    # FINAL_V32_POSTER_SYNC
+
     cached = poster_cache.get(code)
 
     if (
         cached
-        and len(cached) >= 3
+        and len(cached) >= 4
+        and cached[3] == file_id
         and time.time() - cached[0] < 3600
     ):
         return Response(
             content=cached[1],
             media_type=cached[2],
             headers={
-                "Cache-Control": "public,max-age=3600",
+                "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
                 "X-Poster-Source": "cache",
             },
         )
@@ -488,13 +491,14 @@ async def poster(code: int) -> Response:
             time.time(),
             image.content,
             content_type,
+            file_id,
         )
 
         return Response(
             image.content,
             media_type=content_type,
             headers={
-                "Cache-Control": "public,max-age=3600",
+                "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
                 "X-Poster-Source": "telegram",
             },
         )
@@ -530,7 +534,6 @@ async def poster(code: int) -> Response:
                 "X-Poster-Error": error_code,
             },
         )
-
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
